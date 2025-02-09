@@ -1,0 +1,164 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>התרת אחסנה</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .container {
+            background: #fff;
+            border: none;
+        }
+
+        .header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-decoration: underline;
+            width: 100%;
+        }
+
+        .row {
+            margin-bottom: 10px;
+        }
+
+            .row .label {
+                display: inline;
+                /*font-weight: bold;*/
+            }
+
+            .row .value {
+                font-weight: bold;
+            }
+
+            .row span {
+                display: inline-block;
+                min-width: auto;
+                margin-left: 10px;
+            }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+            .table th, .table td {
+                border: 1px solid #000;
+                padding: 8px;
+                text-align: center;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">התרת אחסנה</div>
+
+        <div class="row">
+            <span class="label">התרת אחסנה:</span> <span class="value">{{Consignment_ConsignmentID}}</span>
+            <span class="label">מתאריך:</span> <span class="value">{{Consignment_LastUpdatedDate}}</span>
+            <span class="label">(גרסה:{{Consignment_DeclarationVer}})</span>
+        </div>
+
+        <div class="row">
+            <span class="label">מס' גוש:</span> <span class="value">{{Consignment_FormattedGush}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">יבואן:</span> <span class="value">{{Consignment_ImporterName}}</span>
+            <span class="label">ח"פ:</span> <span class="value">{{Consignment_ImporterID}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">סוכן מכס:</span> <span class="value">{{Consignment_CustomsAgent}}</span>
+            <span class="label">ח"פ:</span> <span class="value">{{Consignment_CustomsAgentID}}</span>
+        </div>
+
+        <!--<div class="row">
+            <span class="label">מס' יבואן:</span> <span class="value">045875 דורטק טכנולוגיות כניסה בע"מ</span>
+            <span class="label">מס' עמיל:</span> <span class="value">4521 גכדגכ דגכגדכ</span>
+        </div>-->
+
+        <div class="row">
+            <span class="label">תיק סוכן:</span> <span class="value">{{Consignment_CustomsAgentFile}}</span>
+            <span class="label">אזור אוטונומיה:</span><span class="value">{{Consignment_AutonomyRegionType}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">ערך לצרכי מס:</span> <span class="value">{{Consignment_FormattedDealValueNIS}} ₪</span>
+        </div>
+
+        <div class="row">
+            <span class="label">ערך FOB:</span> <span class="value">{{Consignment_FormattedFobValueNis}} ₪</span>
+        </div>
+
+        <div class="row">
+            <span class="label">סה"כ כמות לשחרור:</span> <span class="value">{{TotalSum}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">מחסן מקבל:</span> <span class="value">{{Manifest_TermName}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">אתר טעינה:</span> <span class="value">{{Consignment_loadingSiteNumber}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">אתר פריקה:</span> <span class="value">{{Consignment_unloadingSiteNumber}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">אתר מסירה:</span> <span class="value">{{Consignment_DeliverySitenumber}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">תאור הטובין:</span> <span class="value">{{CargoDescription}}</span>
+        </div>
+        <div class="row">
+            <span class="label">מצהר:</span> <span class="value">{{Consignment_ShipVisitID}}</span>
+            <span class="label">עסקה:</span> <span class="value">{{Consignment_BOL}}</span>
+            <span class="label">ת.צפוי:</span> <span class="value">{{Consignment_ExpectedArrival}}</span>
+        </div>
+        <div class="row">
+            <span class="label">סוכן אניה:</span> <span class="value">{{Consignment_ShipAgentID}}</span>
+        </div>
+        <div class="table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>אריזה</th>
+                        <th>כמות</th>
+                        <th>משקל</th>
+                        <th>תאור</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#ItemsList}}
+                    <tr>
+                        <td>{{ItemsList_PackageType}}</td>
+                        <td>{{ItemsList_Quantity}}</td>
+                        <td>{{ItemsList_ItemWeight}}</td>
+                        <td>{{ItemsList_CargoDescription}}</td>
+                    </tr>
+                    {{/ItemsList}}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row">
+            <span class="label">מכולה:</span> <span class="value">{{ContainersNumber}}</span>
+        </div>
+
+    </div>
+</body>
+</html>
