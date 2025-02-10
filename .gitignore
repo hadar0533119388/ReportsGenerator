@@ -1,0 +1,20 @@
+# התעלמות מקבצי קומפילציה
+bin/
+obj/
+
+# התעלמות מקבצים זמניים של VS
+.vscode/
+*.user
+*.suo
+*.cache
+*.log
+
+# התעלמות מקבצי Build של Visual Studio
+*.exe
+*.dll
+*.pdb
+
+# התעלמות מקבצי חבילות NuGet
+packages/
+*.nupkg
+project.lock.json
