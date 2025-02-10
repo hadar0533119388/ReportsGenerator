@@ -42,5 +42,11 @@ namespace Reports.Infrastructure.Models
         public string MarksAndNumbers { get; set; }
 
         public bool? IsLastReleaseIndication { get; set; }
+
+        public string FormattedItemWeight => ((decimal)ItemWeight).ToString("N0");
+
+        public string FormattedQuantity => ((decimal)Quantity).ToString("N0");
+
+
     }
 }

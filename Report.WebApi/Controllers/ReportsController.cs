@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http;
 
@@ -29,7 +30,13 @@ namespace Report.WebApi.Controllers
                 if (reportBytes == null || reportBytes.Length == 0)
                     return NotFound();
 
-                return Ok(reportBytes);
+                return ResponseMessage(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(reportBytes)
+                    {
+                        Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
+                    }
+                });
             }
             catch (Exception ex)
             {

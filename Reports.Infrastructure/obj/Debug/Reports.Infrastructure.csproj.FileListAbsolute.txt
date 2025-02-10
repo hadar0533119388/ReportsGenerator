@@ -53,3 +53,4 @@ D:\USER\תמונות\הדר סמינר\ReportGenerator\ReportGenerator\Reports.I
 D:\USER\תמונות\הדר סמינר\ReportGenerator\ReportGenerator\Reports.Infrastructure\obj\Debug\Reports.Infrastructure.csproj.CopyComplete
 D:\USER\תמונות\הדר סמינר\ReportGenerator\ReportGenerator\Reports.Infrastructure\obj\Debug\Reports.Infrastructure.dll
 D:\USER\תמונות\הדר סמינר\ReportGenerator\ReportGenerator\Reports.Infrastructure\obj\Debug\Reports.Infrastructure.pdb
+D:\USER\תמונות\הדר סמינר\ReportGenerator\ReportGenerator\Reports.Infrastructure\obj\Debug\Reports.Infrastructure.csproj.AssemblyReference.cache

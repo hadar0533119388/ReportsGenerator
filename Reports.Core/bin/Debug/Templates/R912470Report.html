@@ -11,11 +11,16 @@
             margin: 0;
             padding: 20px;
             background-color: #fff;
+            direction: rtl;           
         }
 
         .container {
             background: #fff;
             border: none;
+            margin-right: 30px;
+            margin-left: 30px;
+            margin-bottom: 30px;
+            margin-top: 30px;
         }
 
         .header {
@@ -25,6 +30,9 @@
             margin-bottom: 15px;
             text-decoration: underline;
             width: 100%;
+            display: flex;
+            justify-content: center;
+            
         }
 
         .row {
@@ -33,7 +41,6 @@
 
             .row .label {
                 display: inline;
-                /*font-weight: bold;*/
             }
 
             .row .value {
@@ -43,20 +50,33 @@
             .row span {
                 display: inline-block;
                 min-width: auto;
-                margin-left: 10px;
             }
 
-        .table {
-            width: 100%;
+        table {
             border-collapse: collapse;
+            width: 100%;
             margin-top: 20px;
+            margin-bottom: 20px;
+            border-spacing: 15px;
+            /*table-layout: auto;*/          
         }
 
-            .table th, .table td {
-                border: 1px solid #000;
-                padding: 8px;
-                text-align: center;
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #000;
+            white-space: nowrap;
+        }
+            td:last-child {
+                width: 100%;
             }
+        th {
+            padding-bottom: 4px;
+            font-weight: normal;
+        }
+        td {
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -146,8 +166,8 @@
                     {{#ItemsList}}
                     <tr>
                         <td>{{ItemsList_PackageType}}</td>
-                        <td>{{ItemsList_Quantity}}</td>
-                        <td>{{ItemsList_ItemWeight}}</td>
+                        <td>{{ItemsList_FormattedQuantity}}</td>
+                        <td>{{ItemsList_FormattedItemWeight}}</td>
                         <td>{{ItemsList_CargoDescription}}</td>
                     </tr>
                     {{/ItemsList}}

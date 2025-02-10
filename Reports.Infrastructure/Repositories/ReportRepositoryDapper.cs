@@ -31,6 +31,9 @@ namespace Reports.Infrastructure.Repositories
             {
                 Manifest manifest = await GetManifestByManifestIDAsync(request.ManifestID);
 
+                //For SP parameters
+                request.Parameters.Add("ManifestID", request.ManifestID);
+
                 if (Enum.TryParse(reportDtl.FunctionName, true, out StoredProcedure storedProcedure))
                 {
                     switch (storedProcedure)
