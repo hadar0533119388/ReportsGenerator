@@ -1,0 +1,181 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אישור קבלת טובין לאחסנה</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #fff;
+            direction: rtl;
+        }
+
+        .container {
+            background: #fff;
+            border: none;
+            margin-right: 30px;
+            margin-left: 30px;
+            margin-bottom: 30px;
+            margin-top: 30px;
+        }
+
+        .header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-decoration: underline;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .row {
+            margin-bottom: 10px;
+        }
+
+            .row .label {
+                display: inline;
+            }
+
+            .row .value {
+                font-weight: bold;
+            }
+
+            .row span {
+                display: inline-block;
+                min-width: auto;
+            }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-spacing: 15px;
+            /*table-layout: auto;*/
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #000;
+            white-space: nowrap;
+        }
+
+            td:last-child {
+                width: 100%;
+            }
+
+        th {
+            padding-bottom: 4px;
+            font-weight: normal;
+        }
+
+        td {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row" style="display: flex; justify-content: space-between; width: 100%;">
+            <span class="value">{{Manifest_TermName}}, {{Manifest_ManifestID}}</span>
+        </div>
+
+        <!--<div class="header">התרת שחרור</div>-->
+
+        <div class="row">
+            <span class="label">גוש:</span> <span class="value"></span>
+            <span class="label">אישור קבלת טובין לאחסנה מס':</span> <span class="value"></span>
+            <span class="label">תאריך:</span> <span class="value"></span>
+        </div>
+
+        <div class="row">
+            <span class="label">סוכן המכס:</span> <span class="value"></span>
+            <span class="label">מס' הצהרה:</span> <span class="value"></span>
+        </div>
+
+        <div class="row">
+            <span class="label">שם הלקוח:</span> <span class="value"></span>
+            <span class="label">תיק סוכן:</span> <span class="value"></span>
+        </div>
+
+        <div class="row">
+            <span class="label">שם האניה:</span> <span class="value"></span>
+            <span class="label">מס' מצהר:</span> <span class="value"></span>
+            <span class="label">שטר מטען:</span> <span class="value"></span>
+        </div>
+
+        <div class="table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>שורה</th>
+                        <th>מזהה</th>
+                        <th>כמות</th>
+                        <th>תאור הטובין</th>
+                        <th>אריזה</th>
+                        <th>אסמכתא</th>
+                        <th>איתור</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#ConsignmentReleaseItemList}}
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    {{/ConsignmentReleaseItemList}}
+                </tbody>
+            </table>
+        </div>
+        <div class="row">
+            <span class="label">סה"כ:</span> <span class="value"></span>
+            <span class="label">נפח:</span> <span class="value"></span>
+            <span class="label">משקל:</span> <span class="value"></span>
+        </div>
+        <div class="row">
+            <span class="label">הערות:</span> <span class="value"></span>         
+        </div>
+
+        <div class="table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>מכולה</th>
+                        <th>ת.כניסה</th>
+                        <th>ת.יציאת ריקה</th>
+                        <th>ת.ריקון</th>
+                        <th>סוג ריקון</th>
+                        <th>סגר 1</th>
+                        <th>סגר 2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#ConsignmentReleaseItemList}}
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    {{/ConsignmentReleaseItemList}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

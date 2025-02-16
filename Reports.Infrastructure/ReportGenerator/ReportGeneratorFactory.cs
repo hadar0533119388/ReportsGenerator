@@ -1,4 +1,5 @@
-﻿using Reports.Infrastructure.Logger;
+﻿using Reports.Infrastructure.Exceptions;
+using Reports.Infrastructure.Logger;
 using Reports.Infrastructure.Models;
 using System;
 using System.Collections.Generic;
@@ -31,7 +32,7 @@ namespace Reports.Infrastructure.ReportGenerator
             catch(Exception ex)
             {
                 logger.WriteLog($"Exception to get report generators: {ex.Message}");
-                return null;
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
     }

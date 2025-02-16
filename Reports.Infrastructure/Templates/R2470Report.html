@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>התרת שחרור</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #fff;
+            direction: rtl;
+        }
+
+        .container {
+            background: #fff;
+            border: none;
+            margin-right: 30px;
+            margin-left: 30px;
+            margin-bottom: 30px;
+            margin-top: 30px;
+        }
+
+        .header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-decoration: underline;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .row {
+            margin-bottom: 10px;
+        }
+
+            .row .label {
+                display: inline;
+            }
+
+            .row .value {
+                font-weight: bold;
+            }
+
+            .row span {
+                display: inline-block;
+                min-width: auto;
+            }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-spacing: 15px;
+            /*table-layout: auto;*/
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #000;
+            white-space: nowrap;
+        }
+
+            td:last-child {
+                width: 100%;
+            }
+
+        th {
+            padding-bottom: 4px;
+            font-weight: normal;
+        }
+
+        td {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row" style="display: flex; justify-content: space-between; width: 100%;">
+            <span class="value">{{Manifest_TermName}}, {{Manifest_ManifestID}}</span>
+            <div style="display: flex;">
+                <span class="label">ת.הדפסה:</span> <span class="value">{{DatePrint}}</span>
+            </div>
+        </div>
+
+        <div class="header">התרת שחרור</div>
+
+        <div class="row">
+            <span class="label">מס' התרה:</span> <span class="value">{{ConsignmentRelease_DeclarationID}}</span>
+            <span class="label">מתאריך:</span> <span class="value">{{ConsignmentRelease_FormattedLastUpdatedDate}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">הצהרת אחסנה:</span> <span class="value">{{ConsignmentRelease_ConsignmentID}}</span>
+            <span class="label">מס' גוש:</span> <span class="value">{{Consignment_FormattedGush}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">יבואן:</span> <span class="value">{{ConsignmentRelease_ImporterName}}</span>
+            <span class="label">ח"פ:</span> <span class="value">{{ConsignmentRelease_ImporterID}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">סוכן:</span> <span class="value">{{ConsignmentRelease_CustomsAgent}}</span>
+            <span class="label">ח"פ:</span> <span class="value">{{ConsignmentRelease_CustomsAgentID}}</span>
+        </div>
+
+        {{#IsCustomsAgentIDNotSame }}
+        <div class="row" style="text-align: center;">
+            <span class="label">הסוכן בגוש שונה מהסוכן בהתרה</span>
+        </div>
+        {{/IsCustomsAgentIDNotSame}}
+
+        <div class="row">
+            <span class="label">סוכן בגוש:</span> <span class="value">{{Consignment_CustomsAgent}}</span>
+            <span class="label">ח"פ:</span> <span class="value">{{Consignment_CustomsAgentID}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">תיק סוכן:</span> <span class="value">{{ConsignmentRelease_CustomsAgentFile}}</span>
+            <span class="label">אזור אוטונומיה:</span><span class="value">{{ConsignmentRelease_AutonomyRegionType}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">ערך בש"ח:</span> <span class="value">{{ConsignmentRelease_FormattedDealValueNIS}} ₪</span>
+            <span class="label">ערך CIF:</span> <span class="value">{{ConsignmentRelease_FormattedCifValueNis}} ₪</span>
+        </div>
+
+        <div class="row">
+            <span class="label">ערך במט"ח:</span> <span class="value">{{ConsignmentRelease_FormattedFOBvaluePC}}</span>
+            <span class="label">מטבע:</span> <span class="value">{{ConsignmentRelease_CurrencyType}}</span> <span class="value">{{ConsignmentRelease_ExchangeRate}}</span>
+            <span class="label">תאריך המרה:</span> <span class="value">{{ConsignmentRelease_TaxationDate}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">מיסים ללא מע"מ:</span> <span class="value">{{ConsignmentRelease_FormattedTotalTax}} ₪</span>
+        </div>
+
+        <div class="row">
+            <span class="label">סה"כ כמות לשחרור:</span> <span class="value">{{TotalSum}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">מחסן מקבל:</span> <span class="value">{{ConsignmentRelease_StoringSiteNumber}}</span>
+        </div>
+
+        <div class="row">
+            <span class="label">תאור הטובין:</span> <span class="value">{{CargoDescription}}</span>
+        </div>
+        <div class="row">
+            <span class="label">מצהר:</span> <span class="value">{{Consignment_ShipVisitID}}</span>
+            <span class="label">עסקה:</span> <span class="value">{{Consignment_BOL}}</span>
+        </div>
+        <div class="row">
+            <span class="label">סוכן אניה:</span> <span class="value">{{Consignment_ShipAgentID}}</span>
+        </div>
+        <div class="table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>אריזה</th>
+                        <th>כמות</th>
+                        <th>משקל</th>
+                        <th>תאור</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#ConsignmentReleaseItemList}}
+                    <tr>
+                        <td>{{ConsignmentReleaseItemList_PackageType}}</td>
+                        <td>{{ConsignmentReleaseItemList_FormattedQuantity}}</td>
+                        <td>{{ConsignmentReleaseItemList_FormattedItemWeight}}</td>
+                        <td>{{ConsignmentReleaseItemList_CargoDescription}}</td>
+                    </tr>
+                    {{/ConsignmentReleaseItemList}}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</body>
+</html>

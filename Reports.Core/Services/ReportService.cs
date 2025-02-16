@@ -1,4 +1,5 @@
 ﻿using Reports.Infrastructure.DTOs;
+using Reports.Infrastructure.Exceptions;
 using Reports.Infrastructure.Logger;
 using Reports.Infrastructure.ReportGenerator;
 using System;
@@ -34,10 +35,15 @@ namespace Reports.Core.Services
                 logger.WriteLog($"Generate Report: {request.ReportID}, ManifestID: {request.ManifestID}, PrinterName: {request.PrinterName}, User: {request.User}. - Process completed with status: {status}");
                 return reportBytes;
             }
+            catch (CustomException ex)
+            {
+                logger.WriteLog($"Error to Generate Report: {ex.Message}");
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Generate Report: {ex.Message}");
-                return null;
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
     }

@@ -37,6 +37,14 @@ namespace Reports.Infrastructure.Models
 
         public string DeliverySiteNumber { get; set; }
 
+        public string StoringSiteNumber { get; set; }
+
+        public string LoadingSiteNumber { get; set; }
+
+        public string UnloadingSiteNumber { get; set; }
+
+        public string AutonomyRegionType { get; set; }
+
         public string ImporterID { get; set; }
 
         public long? DeclarationID { get; set; }
@@ -46,6 +54,8 @@ namespace Reports.Infrastructure.Models
         public short? ReleaseMessageCode { get; set; }
 
         public DateTime? ReleaseDate { get; set; }
+
+        public string GeneralDataType { get; set; }
 
         public string CustomsAgent { get; set; }
 
@@ -78,6 +88,27 @@ namespace Reports.Infrastructure.Models
         public string InternalRemarks { get; set; }
 
         public string CustomerRemarks { get; set; }
+
+        public double? FOBvaluePC { get; set; }
+
+        public double? ExchangeRate { get; set; }
+
+        public string CurrencyType { get; set; }
+
+        public DateTime? TaxationDate { get; set; }
+
+        public string FormattedLastUpdatedDate => LastUpdatedDate?.ToString("dd/MM/yyyy HH:mm");
+
+        public string FormattedDealValueNIS => DealValueNIS?.ToString("N0") ?? string.Empty;
+
+        public string FormattedCifValueNis => CifValueNis?.ToString("N0") ?? string.Empty;
+
+        public string FormattedTotalTax => TotalTax?.ToString("N0") ?? string.Empty;
+
+        public string FormattedFOBvaluePC => FOBvaluePC?.ToString("N0") ?? string.Empty;
+
+
+
 
 
 

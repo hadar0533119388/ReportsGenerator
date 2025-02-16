@@ -37,6 +37,20 @@ namespace Reports.Infrastructure.Models
 
         public string DeliverySiteNumber { get; set; }
 
+        public string StoringSiteNumber { get; set; }
+
+        public string LoadingSiteNumber { get; set; }
+
+        public string UnloadingSiteNumber { get; set; }
+
+        public string ShipVisitID { get; set; }
+
+        public DateTime? ExpectedArrival { get; set; }
+
+        public string ShipAgentID { get; set; }
+
+        public string AutonomyRegionType { get; set; }
+
         public string ImporterID { get; set; }
 
         public long? DeclarationID { get; set; }
@@ -46,6 +60,8 @@ namespace Reports.Infrastructure.Models
         public short? ReleaseMessageCode { get; set; }
 
         public DateTime? ReleaseDate { get; set; }
+
+        public string GeneralDataType { get; set; }
 
         public string CustomsAgent { get; set; }
 
@@ -105,6 +121,8 @@ namespace Reports.Infrastructure.Models
 
         public int? PalletsAllocations { get; set; }
 
+        public int? NumOfPallets { get; set; }
+
         public int? Gush { get; set; }
 
         public short? LockInd { get; set; }
@@ -137,23 +155,32 @@ namespace Reports.Infrastructure.Models
 
         public DateTime? LastSuccessTrans110 { get; set; }
 
-        public string loadingSiteNumber { get; set; }
+        public string NDIReason { get; set; }
 
-        public string unloadingSiteNumber { get; set; }
+        public int? NDIstatus { get; set; }
 
-        public DateTime? ExpectedArrival { get; set; }
+        public string NDI_IDmsg1050 { get; set; }
 
-        public string ShipAgentID { get; set; }
+        public int? NDI_ReleaseID { get; set; }
 
-        public string AutonomyRegionType { get; set; }
+        public string ResponseStat3240 { get; set; }
 
-        public string ShipVisitID { get; set; }
+        public string ResponseID3240 { get; set; }
 
-        public string FormattedDealValueNIS => ((decimal)DealValueNIS).ToString("N0");
+        public string ResponseErr3240 { get; set; }
 
-        public string FormattedFobValueNis => ((decimal)FobValueNis).ToString("N0");
+        public DateTime? TransmissionTime3240 { get; set; }
+
+        public DateTime? LastSuccessTrans3240 { get; set; }
+
+        public string FormattedDealValueNIS => DealValueNIS?.ToString("N0") ?? string.Empty;
+
+        public string FormattedFobValueNis => FobValueNis?.ToString("N0") ?? string.Empty;
 
         public string FormattedGush => Gush.ToString().Length > 2 ? $"{Gush.ToString().Substring(0, 2)}/{Gush.ToString().Substring(2)}": Gush.ToString();
+        
+        public string FormattedLastUpdatedDate => LastUpdatedDate?.ToString("dd/MM/yyyy HH:mm");
+
 
 
     }

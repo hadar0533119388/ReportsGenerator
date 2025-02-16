@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Reports.Infrastructure.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -38,7 +39,7 @@ namespace Reports.Infrastructure.Logger
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error writing the log: {ex.Message}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.LogAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.LogAccessFailure] } : {ex.Message}");
             }
         }
     }

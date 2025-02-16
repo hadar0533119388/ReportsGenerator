@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace Reports.Infrastructure.Models
 {
-    [Table("Items")]
-    public class Item
+    [Table("ConsignmentsReleasesItems")]
+    public class ConsignmentReleaseItem
     {
         [Key]
         public int RecID { get; set; }
@@ -25,19 +25,17 @@ namespace Reports.Infrastructure.Models
 
         public string CargoDescription { get; set; }
 
-        public int? GeneralGoodsCode { get; set; }
-
         public double? ItemWeight { get; set; }
 
         public int? Quantity { get; set; }
-
-        public int? OriginalQuantity { get; set; }
 
         public string WCOPackageType { get; set; }
 
         public string PackageType { get; set; }
 
         public string HScode { get; set; }
+
+        public string AgentFileReferenceID { get; set; }
 
         public string MarksAndNumbers { get; set; }
 
@@ -46,7 +44,6 @@ namespace Reports.Infrastructure.Models
         public string FormattedItemWeight => ItemWeight?.ToString("N0") ?? string.Empty;
 
         public string FormattedQuantity => Quantity?.ToString("N0") ?? string.Empty;
-
 
     }
 }

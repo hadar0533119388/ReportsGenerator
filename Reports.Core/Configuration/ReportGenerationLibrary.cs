@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Reports.Core.Services;
 using Reports.Infrastructure.DTOs;
+using Reports.Infrastructure.Exceptions;
 using Reports.Infrastructure.Logger;
 using Reports.Infrastructure.ReportGenerator;
 using Reports.Infrastructure.Repositories;
@@ -50,9 +51,13 @@ namespace Reports.Core.Configuration
                     return await reportService.GetReportAsync(request);
                 }
             }
+            catch (CustomException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
-                return null;
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
     }

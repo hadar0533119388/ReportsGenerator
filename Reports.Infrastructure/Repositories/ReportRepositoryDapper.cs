@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Reports.Infrastructure.DTOs;
+using Reports.Infrastructure.Exceptions;
 using Reports.Infrastructure.Logger;
 using Reports.Infrastructure.Models;
 using System;
@@ -31,6 +32,9 @@ namespace Reports.Infrastructure.Repositories
             {
                 Manifest manifest = await GetManifestByManifestIDAsync(request.ManifestID);
 
+                if(manifest == null)
+                    throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+
                 //For SP parameters
                 request.Parameters.Add("ManifestID", request.ManifestID);
 
@@ -40,7 +44,14 @@ namespace Reports.Infrastructure.Repositories
                     {
                         case StoredProcedure.GetDataForR912470Report:
                             R912470ReportResponse R912470ReportResponse = await GetDataForR912470Report(request.Parameters, manifest);
+                            if(R912470ReportResponse.Consignment == null)
+                                throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
                             return R912470ReportResponse;
+                        case StoredProcedure.GetDataForR2470Report:
+                            R2470ReportResponse R2470ReportResponse = await GetDataForR2470Report(request.Parameters, manifest);
+                            if (R2470ReportResponse.ConsignmentRelease == null)
+                                throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+                            return R2470ReportResponse;
 
                         default:
                             break;
@@ -48,9 +59,15 @@ namespace Reports.Infrastructure.Repositories
 
                 }
             }
+            catch (CustomException ex)
+            {
+                logger.WriteLog($"Error to Get Data Async: {ex.Message}");
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get Data Async: {ex.Message}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
             return null;
         }
@@ -72,7 +89,7 @@ namespace Reports.Infrastructure.Repositories
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get Manifest By ManifestID Async: {ex.Message}");
-                return null;
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }
         public async Task<ReportDtl> GetReportsDtlByReportIDAsync(string reportID)
@@ -92,7 +109,7 @@ namespace Reports.Infrastructure.Repositories
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get ReportsDtl By ReportID Async: {ex.Message}");
-                return null;
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }
         public async Task<R912470ReportResponse> GetDataForR912470Report(Dictionary<string, object> parameters, Manifest manifest)
@@ -120,7 +137,35 @@ namespace Reports.Infrastructure.Repositories
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get Data For R912470 Report: {ex.Message}");
-                return null;
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
+            }
+        }
+
+        public async Task<R2470ReportResponse> GetDataForR2470Report(Dictionary<string, object> parameters, Manifest manifest)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var multi = await connection.QueryMultipleAsync(StoredProcedure.GetDataForR2470Report.ToString(), new DynamicParameters(parameters), commandType: CommandType.StoredProcedure))
+                    {
+                        var response = new R2470ReportResponse
+                        {
+                            ConsignmentRelease = await multi.ReadFirstOrDefaultAsync<ConsignmentRelease>(),
+                            Consignment = await multi.ReadFirstOrDefaultAsync<Consignment>(),
+                            ConsignmentReleaseItemList = (await multi.ReadAsync<ConsignmentReleaseItem>()).ToList(),
+                            Manifest = manifest
+                        };
+                        return response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Get Data For R2470 Report: {ex.Message}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }
 

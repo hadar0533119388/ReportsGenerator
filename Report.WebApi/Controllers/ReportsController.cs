@@ -1,6 +1,7 @@
 ﻿using Report.WebApi.Filters;
 using Reports.Core.Configuration;
 using Reports.Infrastructure.DTOs;
+using Reports.Infrastructure.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,11 +21,12 @@ namespace Report.WebApi.Controllers
         [Route("generate")]
         public async Task<IHttpActionResult> GenerateReport([FromBody] ReportRequest request)
         {
-            if (request == null)
-                return BadRequest("Invalid request.");
-
             try
             {
+                if (!ModelState.IsValid || request == null)
+                    throw new CustomException((int)ErrorMessages.ErrorCodes.InvalidInput, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.InvalidInput]);
+
+
                 byte[] reportBytes = await ReportGeneratorFacade.GenerateReportAsync(request);
 
                 if (reportBytes == null || reportBytes.Length == 0)
@@ -36,6 +38,18 @@ namespace Report.WebApi.Controllers
                     {
                         Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
                     }
+                });
+            }
+            catch (CustomException ex)
+            {
+                var httpStatus = ErrorMessages.StatusCodes.ContainsKey(ex.ErrorCode)
+                                ? ErrorMessages.StatusCodes[ex.ErrorCode]
+                                : HttpStatusCode.InternalServerError; 
+
+                return Content(httpStatus, new ErrorResponse
+                {
+                    ErrorCode = ex.ErrorCode,
+                    ErrorMessage = ex.Message
                 });
             }
             catch (Exception ex)

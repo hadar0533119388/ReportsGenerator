@@ -1,6 +1,7 @@
 ﻿using DinkToPdf;
 using PuppeteerSharp;
 using Reports.Infrastructure.DTOs;
+using Reports.Infrastructure.Exceptions;
 using Reports.Infrastructure.Logger;
 using Reports.Infrastructure.Models;
 using Reports.Infrastructure.Repositories;
@@ -12,6 +13,7 @@ using System.Diagnostics;
 using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
+using System.Printing;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -42,6 +44,10 @@ namespace Reports.Infrastructure.ReportGenerator
                 //Get global data from ReportsDtl table
                 var reportDtl = await repositoryDapper.GetReportsDtlByReportIDAsync(request.ReportID);
 
+                if(reportDtl == null)
+                    throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+
+
                 //Get data for a specific report
                 var dataReport = await repositoryDapper.GetDataAsync(request, reportDtl);
 
@@ -68,10 +74,15 @@ namespace Reports.Infrastructure.ReportGenerator
                 }
                 
             }
-            catch(Exception ex)
+            catch (CustomException ex)
             {
                 logger.WriteLog($"Error to Execute Async: {ex.Message}");
-                return null;
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Execute Async: {ex.Message}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
 
@@ -129,7 +140,7 @@ namespace Reports.Infrastructure.ReportGenerator
             catch(Exception ex)
             {
                 logger.WriteLog($"Error to Flatten Object to dictionary: {ex.Message}");
-                return null;
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
 
@@ -158,10 +169,9 @@ namespace Reports.Infrastructure.ReportGenerator
             catch(Exception ex)
             {
                 logger.WriteLog($"Error to generate HTML: {ex.Message}");
-                return null;
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
-
         private  async Task<byte[]> HtmlToPdfDocument(string htmlContent)
         {
             try
@@ -187,11 +197,9 @@ namespace Reports.Infrastructure.ReportGenerator
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to generate PDF from HTML: {ex.Message}");
-                return null;
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
-
-
         private void PrintPdfDocument(byte[] pdf, string printerName)
         {
             string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf");
@@ -201,15 +209,24 @@ namespace Reports.Infrastructure.ReportGenerator
                 // Saving the array to a temporary file
                 File.WriteAllBytes(tempFilePath, pdf);
 
+                PrintQueueStatus status = GetPrinterStatus(printerName);
+
+                if (status.HasFlag(PrintQueueStatus.PaperProblem) ||
+                status.HasFlag(PrintQueueStatus.Offline) ||
+                status.HasFlag(PrintQueueStatus.Error))
+                {
+                    throw new CustomException((int)ErrorMessages.ErrorCodes.UnknownPrinter, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.UnknownPrinter]);
+                }
+
                 // Creating parameters for running SumatraPDF for printing
                 ProcessStartInfo psi = new ProcessStartInfo
                 {
                     FileName = sumatraPDF,
-                    Arguments = $"-print-to \"{printerName}\" {tempFilePath}",
-                    CreateNoWindow = true,
+                    Arguments = $"-print-to \"{printerName}\" -silent \"{tempFilePath}\"",
                     RedirectStandardError = true,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    UseShellExecute = false
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
                 };
 
 
@@ -217,17 +234,19 @@ namespace Reports.Infrastructure.ReportGenerator
                 {
                     process.Start();
 
-                    string error = process.StandardError.ReadToEnd();
+                    string errorOutput = process.StandardError.ReadToEnd();
+                    string standardOutput = process.StandardOutput.ReadToEnd();
 
                     process.WaitForExit();
 
                     if (process.ExitCode != 0)
                     {
                         logger.WriteLog($"Error to Print PDF Document. ExitCode: {process.ExitCode}");
-                        if (!string.IsNullOrEmpty(error))
+                        if (!string.IsNullOrEmpty(errorOutput))
                         {
-                            logger.WriteLog($"Error details: {error}");
+                            logger.WriteLog($"Error details: {errorOutput}");
                         }
+                        throw new CustomException((int)ErrorMessages.ErrorCodes.FailedToPrint, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.FailedToPrint]);
                     }
                     else
                     {
@@ -235,9 +254,15 @@ namespace Reports.Infrastructure.ReportGenerator
                     }
                 }
             }
+            catch (CustomException ex)
+            {
+                logger.WriteLog($"Error to Print PDF Document: {ex.Message}");
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Print PDF Document: {ex.Message}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.FailedToPrint, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.FailedToPrint] } : {ex.Message}");
             }
             finally
             {
@@ -247,6 +272,21 @@ namespace Reports.Infrastructure.ReportGenerator
                     File.Delete(tempFilePath);
                 }
             }
+        }
+        private PrintQueueStatus GetPrinterStatus(string printerName)
+        {
+            using (LocalPrintServer printServer = new LocalPrintServer())
+            {
+                foreach (PrintQueue queue in printServer.GetPrintQueues())
+                {
+                    if (queue.Name.Equals(printerName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        queue.Refresh();
+                        return queue.QueueStatus;
+                    }
+                }
+            }
+            throw new CustomException((int)ErrorMessages.ErrorCodes.UnknownPrinter, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.UnknownPrinter]);
         }
     }
 }
