@@ -1,5 +1,6 @@
 ﻿using DinkToPdf;
 using PuppeteerSharp;
+using PuppeteerSharp.Media;
 using Reports.Infrastructure.DTOs;
 using Reports.Infrastructure.Exceptions;
 using Reports.Infrastructure.Logger;
@@ -153,16 +154,17 @@ namespace Reports.Infrastructure.ReportGenerator
         {
             try
             {
-                string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "Templates", templateReport);
-                string template = File.ReadAllText(templatePath);
+                string basePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "Templates");
+                
+                string template = File.ReadAllText(Path.Combine(basePath, templateReport));
+                string headerTemplate = File.ReadAllText(Path.Combine(basePath, "Header.html"));
                 
                 var stubble = new StubbleBuilder().Build();
+
+                data["HeaderHtml"] = stubble.Render(headerTemplate, data);
                 string html = stubble.Render(template, data);
 
-                // שמירת קובץ HTML עם הנתונים
-                //File.WriteAllText("output.html", html);
-
-                logger.WriteLog($"Generate HTML completed successfully.");
+                logger.WriteLog("Generate HTML completed successfully.");
 
                 return html;
             }
@@ -185,7 +187,20 @@ namespace Reports.Infrastructure.ReportGenerator
 
                 await page.SetContentAsync(htmlContent);
 
-                var pdfBuffer = await page.PdfDataAsync();
+                string margin = "12mm";
+
+                var pdfOptions = new PdfOptions
+                {
+                    MarginOptions = new MarginOptions
+                    {
+                        Top = margin,
+                        Bottom = margin,
+                        Left = margin,
+                        Right = margin
+                    }
+                };
+
+                var pdfBuffer = await page.PdfDataAsync(pdfOptions);
 
                 await browser.CloseAsync();
 

@@ -36,7 +36,7 @@ namespace Reports.Infrastructure.Repositories
                     throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
 
                 //For SP parameters
-                request.Parameters.Add("ManifestID", request.ManifestID);
+                request.Parameters["ManifestID"] = request.ManifestID;                
 
                 if (Enum.TryParse(reportDtl.FunctionName, true, out StoredProcedure storedProcedure))
                 {
@@ -52,6 +52,11 @@ namespace Reports.Infrastructure.Repositories
                             if (R2470ReportResponse.ConsignmentRelease == null)
                                 throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
                             return R2470ReportResponse;
+                        case StoredProcedure.GetDataForR24720Report:
+                            R24720ReportResponse R24720ReportResponse = await GetDataForR24720Report(request.Parameters, manifest);
+                            if (R24720ReportResponse.Consignment == null)
+                                throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+                            return R24720ReportResponse;
 
                         default:
                             break;
@@ -165,6 +170,36 @@ namespace Reports.Infrastructure.Repositories
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get Data For R2470 Report: {ex.Message}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
+            }
+        }
+
+        public async Task<R24720ReportResponse> GetDataForR24720Report(Dictionary<string, object> parameters, Manifest manifest)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var multi = await connection.QueryMultipleAsync(StoredProcedure.GetDataForR24720Report.ToString(), new DynamicParameters(parameters), commandType: CommandType.StoredProcedure))
+                    {
+                        var response = new R24720ReportResponse
+                        {
+                            Consignment = await multi.ReadFirstOrDefaultAsync<Consignment>(),
+                            EntryLineMoveList = (await multi.ReadAsync<EntryLineMoveView>()).ToList(),
+                            ItemsList = (await multi.ReadAsync<Item>()).ToList(),
+                            Control1050List = (await multi.ReadAsync<Control1050>()).ToList(),
+                            Manifest = manifest,
+                            InvMovRecID = Convert.ToInt32(parameters["InvMovRecID"])
+                    };
+                        return response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Get Data For R24720 Report: {ex.Message}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }

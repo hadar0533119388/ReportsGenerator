@@ -9,7 +9,6 @@
             font-family: "Courier New", Courier, monospace;
             line-height: 1.6;
             margin: 0;
-            padding: 20px;
             background-color: #fff;
             direction: rtl;
         }
@@ -17,10 +16,6 @@
         .container {
             background: #fff;
             border: none;
-            margin-right: 30px;
-            margin-left: 30px;
-            margin-bottom: 30px;
-            margin-top: 30px;
         }
 
         .header {
@@ -78,37 +73,71 @@
 
         td {
             font-weight: bold;
-        }
+        }    
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="row" style="display: flex; justify-content: space-between; width: 100%;">
-            <span class="value">{{Manifest_TermName}}, {{Manifest_ManifestID}}</span>
+
+        {{{HeaderHtml}}}
+
+        <div class="header">אישור קבלת טובין לאחסנה</div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 33%; min-width: 200px; display: flex;">
+                <span class="label">גוש:</span>
+                <span class="value">{{Consignment_FormattedGush}}</span>
+            </div>
+            <div style="flex: 1 1 40%; min-width: 200px; display: flex;">
+                <span class="label">לאחסנה מס':</span>
+                <span class="value">{{InvMovRecID}}</span>
+            </div>
+            <div style="flex: 1 1 37%; min-width: 200px; display: flex;">
+                <span class="label">תאריך:</span>
+                <span class="value">{{DateOpen}}</span>
+            </div>
         </div>
 
-        <!--<div class="header">התרת שחרור</div>-->
-
-        <div class="row">
-            <span class="label">גוש:</span> <span class="value"></span>
-            <span class="label">אישור קבלת טובין לאחסנה מס':</span> <span class="value"></span>
-            <span class="label">תאריך:</span> <span class="value"></span>
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">סוכן המכס:</span>
+                <span class="value">{{Consignment_BilledCA}}</span>
+            </div>
+            <div style="flex: 1 1 17%; min-width: 200px; display: flex;">
+                <span class="label">מס' הצהרה:</span>
+                <span class="value">{{Consignment_ConsignmentID}}</span>
+            </div>
         </div>
 
-        <div class="row">
-            <span class="label">סוכן המכס:</span> <span class="value"></span>
-            <span class="label">מס' הצהרה:</span> <span class="value"></span>
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">שם הלקוח:</span>
+                <span class="value">{{Consignment_BilledImporter}}</span>
+            </div>
+            <div style="flex: 1 1 17%; min-width: 200px; display: flex;">
+                <span class="label">תיק סוכן:</span>
+                <span class="value">{{Consignment_CustomsAgentFile}}</span>
+            </div>
         </div>
 
-        <div class="row">
-            <span class="label">שם הלקוח:</span> <span class="value"></span>
-            <span class="label">תיק סוכן:</span> <span class="value"></span>
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">שם האניה:</span>
+                <span class="value">{{Consignment_ShipName}}</span>
+            </div>
+            <div style="flex: 1 1 17%; min-width: 200px; display: flex;">
+                <span class="label">מס' מצהר:</span>
+                <span class="value">{{Consignment_ShipVisitID}}</span>
+            </div>
         </div>
 
-        <div class="row">
-            <span class="label">שם האניה:</span> <span class="value"></span>
-            <span class="label">מס' מצהר:</span> <span class="value"></span>
-            <span class="label">שטר מטען:</span> <span class="value"></span>
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 33%; min-width: 200px; display: flex;"></div>
+            <div style="flex: 1 1 33%; min-width: 200px; display: flex;"></div>
+            <div style="flex: 1 1 33%; min-width: 200px; display: flex;">
+                <span class="label">שטר מטען:</span>
+                <span class="value">{{Consignment_BOL}}</span>
+            </div>
         </div>
 
         <div class="table">
@@ -125,27 +154,33 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {{#ConsignmentReleaseItemList}}
+                    {{#EntryLineMoveList}}
+                    <tr>
+                        <td>{{EntryLineMoveList_LineNum}}</td>
+                        <td>{{EntryLineMoveList_LineID}}</td>
+                        <td>{{EntryLineMoveList_FormattedLineQuantityDeclared}}</td>
+                        <td>{{EntryLineMoveList_LineDesc}}</td>
+                        <td>{{EntryLineMoveList_LinePackType}}</td>
+                        <td></td>
+                        <td>{{EntryLineMoveList_Location}}</td>
+                    </tr>
+                    {{/EntryLineMoveList}}
+                </tbody>
+                <tfoot>
                     <tr>
                         <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                        <td>סה"כ:</td>
+                        <td>{{SumQuantity}}</td>
+                        <td>נפח: {{Consignment_Volume}} מ"ק</td>
+                        <td>משקל: {{SumWeight}} ק"ג</td>
+                        <td colspan="2"></td>
                     </tr>
-                    {{/ConsignmentReleaseItemList}}
-                </tbody>
+                </tfoot>
             </table>
         </div>
+
         <div class="row">
-            <span class="label">סה"כ:</span> <span class="value"></span>
-            <span class="label">נפח:</span> <span class="value"></span>
-            <span class="label">משקל:</span> <span class="value"></span>
-        </div>
-        <div class="row">
-            <span class="label">הערות:</span> <span class="value"></span>         
+            <span class="label">הערות:</span> <span class="value">{{Consignment_CustomerRemarks}}</span>
         </div>
 
         <div class="table">
@@ -162,19 +197,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {{#ConsignmentReleaseItemList}}
+                    {{#Control1050List}}
                     <tr>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                        <td>{{Control1050List_ContainerNumber}}</td>
+                        <td>{{Control1050List_MoveDate}}</td>
+                        <td>{{Control1050List_MTMoveDate}}</td>
+                        <td>{{Control1050List_MTingDate}}</td>
+                        <td>{{Control1050List_MTingTypeMessage}}</td>
+                        <td>{{Control1050List_SealNumber}}</td>
+                        <td>{{Control1050List_Seal2Number}}</td>
                     </tr>
-                    {{/ConsignmentReleaseItemList}}
+                    {{/Control1050List}}
                 </tbody>
             </table>
+        </div>
+        <div style="display: flex; flex-direction: column; page-break-inside: avoid;">
+            <span>
+                אנו מאשרים שקבלנו לאחסנה במחסנינו את הטובין המפורטים להלן.
+                הטובין מאוחסנים בהתאם לתנאים הכלליים הקיימים במחסני הערובה שלנו
+                ואשר אושרו ע"י בית הדין לחוזים אחידים.
+            </span>
+            <span>פרוט התנאים ראה מעבר לדף.</span>
+            <span style="margin-bottom: 50px;">הובטח נגד אש/אש ופריצה</span>
+            <span style="flex-grow: 1; border-bottom: 1px dashed black; width: 100%;"></span>
+            <span>הסחורה אינה מבוטחת כנגד נזקי רעידת אדמה ונזקים הנובעים ממנה.</span>
+            <span>הננו להזכירכם כי נמנעתם מלהורות לנו לבטח את הטובין שלכם כנגד נזקי טבע.</span>
         </div>
     </div>
 </body>

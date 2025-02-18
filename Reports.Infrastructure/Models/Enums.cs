@@ -18,7 +18,8 @@ namespace Reports.Infrastructure.Models
             GetManifestByManifestID,
             GetReportsDtl,
             GetDataForR912470Report,
-            GetDataForR2470Report
+            GetDataForR2470Report,
+            GetDataForR24720Report
         }
     }
 }

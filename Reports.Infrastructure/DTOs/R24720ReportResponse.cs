@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Reports.Infrastructure.DTOs
 {
-    public class R912470ReportResponse
+    public class R24720ReportResponse
     {
         public Manifest Manifest { get; set; }
 
@@ -17,20 +17,25 @@ namespace Reports.Infrastructure.DTOs
 
         public List<Control1050> Control1050List { get; set; }
 
-        public string TotalSum => ItemsList.Sum(item => item.Quantity)?.ToString("N0") ?? string.Empty;
+        public List<EntryLineMoveView> EntryLineMoveList { get; set; }
 
-        public string CargoDescription => string.Join(", ", ItemsList.Select(item => item.CargoDescription));
+        public string SumWeight => ItemsList.Sum(item => item.ItemWeight)?.ToString("N0") ?? string.Empty;
 
-        public string ContainersNumber => string.Join(", ", Control1050List.Select(item => item.ContainerNumber));
+        public string SumQuantity => EntryLineMoveList.Sum(item => item.LineQuantityDeclared)?.ToString("N0") ?? string.Empty;
+
+        public string DateOpen => DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+
+        public int InvMovRecID { get; set; }
 
 
 
-        public R912470ReportResponse()
+        public R24720ReportResponse()
         {
             Manifest = new Manifest();
             Consignment = new Consignment();
             ItemsList = new List<Item>();
             Control1050List = new List<Control1050>();
+            EntryLineMoveList = new List<EntryLineMoveView>();
         }
     }
 }

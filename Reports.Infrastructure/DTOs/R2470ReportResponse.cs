@@ -17,7 +17,7 @@ namespace Reports.Infrastructure.DTOs
 
         public List<ConsignmentReleaseItem> ConsignmentReleaseItemList { get; set; }
 
-        public int? TotalSum => ConsignmentReleaseItemList.Sum(item => item.Quantity);
+        public string TotalSum => ConsignmentReleaseItemList.Sum(item => item.Quantity)?.ToString("N0") ?? string.Empty;
 
         public string CargoDescription => string.Join(", ", ConsignmentReleaseItemList.Select(item => item.CargoDescription));
 

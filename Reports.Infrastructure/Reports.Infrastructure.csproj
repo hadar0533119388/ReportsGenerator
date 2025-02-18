@@ -244,6 +244,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DTOs\R2470ReportResponse.cs" />
+    <Compile Include="DTOs\R24720ReportResponse.cs" />
     <Compile Include="DTOs\R912470ReportResponse.cs" />
     <Compile Include="DTOs\ReportRequest.cs" />
     <Compile Include="Exceptions\CustomException.cs" />
@@ -256,6 +257,7 @@
     <Compile Include="Models\ConsignmentReleaseItem.cs" />
     <Compile Include="Models\Control1050.cs" />
     <Compile Include="Models\EntryLine.cs" />
+    <Compile Include="Models\EntryLineMoveView.cs" />
     <Compile Include="Models\Enums.cs" />
     <Compile Include="Models\Item.cs" />
     <Compile Include="Models\Manifest.cs" />
@@ -276,10 +278,15 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Templates\Header.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Templates\R2470Report.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Templates\R24720Report.html" />
+    <Content Include="Templates\R24720Report.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Templates\R912470Report.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

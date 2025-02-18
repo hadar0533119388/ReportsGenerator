@@ -51,5 +51,16 @@ namespace Reports.Infrastructure.Models
         public DateTime? TransmissionTime { get; set; }
 
         public DateTime? LastSuccessTransmission { get; set; }
+
+        public DateTime? MTMoveDate { get; set; }
+
+        public DateTime? MTingDate { get; set; }
+
+        public short? MTingType { get; set; }
+
+        public string Seal2Number { get; set; }
+
+        public short? MTingTypeMessage { get; set; }
+
     }
 }
