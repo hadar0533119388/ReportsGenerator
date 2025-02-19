@@ -77,12 +77,12 @@ namespace Reports.Infrastructure.ReportGenerator
             }
             catch (CustomException ex)
             {
-                logger.WriteLog($"Error to Execute Async: {ex.Message}");
+                logger.WriteLog($"Error to Execute Async: {ex}");
                 throw;
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Error to Execute Async: {ex.Message}");
+                logger.WriteLog($"Error to Execute Async: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
@@ -140,7 +140,7 @@ namespace Reports.Infrastructure.ReportGenerator
             }
             catch(Exception ex)
             {
-                logger.WriteLog($"Error to Flatten Object to dictionary: {ex.Message}");
+                logger.WriteLog($"Error to Flatten Object to dictionary: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
@@ -170,7 +170,7 @@ namespace Reports.Infrastructure.ReportGenerator
             }
             catch(Exception ex)
             {
-                logger.WriteLog($"Error to generate HTML: {ex.Message}");
+                logger.WriteLog($"Error to generate HTML: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
@@ -211,7 +211,7 @@ namespace Reports.Infrastructure.ReportGenerator
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Error to generate PDF from HTML: {ex.Message}");
+                logger.WriteLog($"Error to generate PDF from HTML: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
@@ -271,12 +271,12 @@ namespace Reports.Infrastructure.ReportGenerator
             }
             catch (CustomException ex)
             {
-                logger.WriteLog($"Error to Print PDF Document: {ex.Message}");
+                logger.WriteLog($"Error to Print PDF Document: {ex}");
                 throw;
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Error to Print PDF Document: {ex.Message}");
+                logger.WriteLog($"Error to Print PDF Document: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.FailedToPrint, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.FailedToPrint] } : {ex.Message}");
             }
             finally

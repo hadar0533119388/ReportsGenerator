@@ -37,12 +37,12 @@ namespace Reports.Core.Services
             }
             catch (CustomException ex)
             {
-                logger.WriteLog($"Error to Generate Report: {ex.Message}");
+                logger.WriteLog($"Error to Generate Report: {ex}");
                 throw;
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Error to Generate Report: {ex.Message}");
+                logger.WriteLog($"Error to Generate Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }

@@ -31,7 +31,7 @@ namespace Reports.Infrastructure.ReportGenerator
             }
             catch(Exception ex)
             {
-                logger.WriteLog($"Exception to get report generators: {ex.Message}");
+                logger.WriteLog($"Exception to get report generators: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }

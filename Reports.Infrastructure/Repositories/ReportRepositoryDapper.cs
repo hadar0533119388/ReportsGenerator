@@ -66,12 +66,12 @@ namespace Reports.Infrastructure.Repositories
             }
             catch (CustomException ex)
             {
-                logger.WriteLog($"Error to Get Data Async: {ex.Message}");
+                logger.WriteLog($"Error to Get Data Async: {ex}");
                 throw;
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Error to Get Data Async: {ex.Message}");
+                logger.WriteLog($"Error to Get Data Async: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
             return null;
@@ -93,7 +93,7 @@ namespace Reports.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Error to Get Manifest By ManifestID Async: {ex.Message}");
+                logger.WriteLog($"Error to Get Manifest By ManifestID Async: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }
@@ -113,7 +113,7 @@ namespace Reports.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Error to Get ReportsDtl By ReportID Async: {ex.Message}");
+                logger.WriteLog($"Error to Get ReportsDtl By ReportID Async: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }
@@ -141,7 +141,7 @@ namespace Reports.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Error to Get Data For R912470 Report: {ex.Message}");
+                logger.WriteLog($"Error to Get Data For R912470 Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }
@@ -169,7 +169,7 @@ namespace Reports.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Error to Get Data For R2470 Report: {ex.Message}");
+                logger.WriteLog($"Error to Get Data For R2470 Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }
@@ -199,7 +199,7 @@ namespace Reports.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                logger.WriteLog($"Error to Get Data For R24720 Report: {ex.Message}");
+                logger.WriteLog($"Error to Get Data For R24720 Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }
