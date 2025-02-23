@@ -22,6 +22,8 @@ namespace Reports.Infrastructure.Models
 
         public string ContainerNumber { get; set; }
 
+        public short? ContainerLength { get; set; }
+
         public string ExitedFrom { get; set; }
 
         public DateTime? OnTheWayTime { get; set; }
@@ -36,11 +38,19 @@ namespace Reports.Infrastructure.Models
 
         public int? DriverID { get; set; }
 
+        public string DriverName { get; set; }
+
         public string TruckID { get; set; }
+
+        public string TransportationCompany { get; set; }
 
         public int? QuantityOnMove { get; set; }
 
+        public double? WeightOnMove { get; set; }
+
         public string MsgContnt { get; set; }
+
+        public string ActionCode { get; set; }
 
         public string ResponseStat { get; set; }
 
@@ -61,6 +71,21 @@ namespace Reports.Infrastructure.Models
         public string Seal2Number { get; set; }
 
         public short? MTingTypeMessage { get; set; }
+
+        public int? Seal2CompletenessCode { get; set; }
+
+        public int? MTdriverID { get; set; }
+
+        public string MTdriverName { get; set; }
+
+        public string MTtruckID { get; set; }
+
+        public string MTtransportCom { get; set; }
+
+        public string MTRemarks { get; set; }
+
+        public string FormattedMTMoveDate => MTMoveDate?.ToString("dd/MM/yyyy HH:mm");
+
 
     }
 }

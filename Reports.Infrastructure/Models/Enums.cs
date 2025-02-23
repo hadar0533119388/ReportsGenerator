@@ -19,7 +19,8 @@ namespace Reports.Infrastructure.Models
             GetReportsDtl,
             GetDataForR912470Report,
             GetDataForR2470Report,
-            GetDataForR24720Report
+            GetDataForR24720Report,
+            GetDataForR1050MTReport
         }
     }
 }
