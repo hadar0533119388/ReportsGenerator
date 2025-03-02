@@ -19,6 +19,18 @@ namespace Reports.Infrastructure.Models
 
         public string TermUN { get; set; }
 
+        public string GroupName { get; set; }
+
+        public int? GroupID { get; set; }
+
+        public string Location { get; set; }
+
+        public int? ZIPcode { get; set; }
+
+        public int? POB { get; set; }
+
+        public string Phone { get; set; }
+
         public string ConsumerId { get; set; }
 
         public string TermName { get; set; }
@@ -36,5 +48,7 @@ namespace Reports.Infrastructure.Models
         public string AttachmentsPath { get; set; }
 
         public int? LastGush { get; set; }
+
+        public string OfficePrinter { get; set; }
     }
 }

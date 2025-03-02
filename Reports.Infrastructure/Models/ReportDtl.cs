@@ -20,5 +20,13 @@ namespace Reports.Infrastructure.Models
         public string Template { get; set; }
 
         public string FunctionName { get; set; }
+
+        public string ReportParams { get; set; }
+
+        public string HeaderTemplate { get; set; }
+
+        public string TitleTemplate { get; set; }
+
+        public string FooterTemplate { get; set; }
     }
 }

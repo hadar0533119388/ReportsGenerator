@@ -62,6 +62,11 @@ namespace Reports.Infrastructure.Repositories
                             if (R1050MTReportResponse.Consignment == null)
                                 throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
                             return R1050MTReportResponse;
+                        case StoredProcedure.GetDataForR2470outReport:
+                            R2470outReportResponse R2470outReportResponse = await GetDataForR2470outReport(request.Parameters, manifest, reportDtl, request.User);
+                            if (R2470outReportResponse.Consignment == null)
+                                throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+                            return R2470outReportResponse;
 
                         default:
                             break;
@@ -232,6 +237,53 @@ namespace Reports.Infrastructure.Repositories
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get Data For R1050MT Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
+            }
+        }
+
+        public async Task<R2470outReportResponse> GetDataForR2470outReport(Dictionary<string, object> parameters, Manifest manifest, ReportDtl reportDtl, string user)
+        {
+            try
+            {
+                var parametersToExclude = new HashSet<string> { "Driver", "Remarks", "TruckID" };
+
+                var dynamicParams = new DynamicParameters();
+
+                foreach (var item in parameters)
+                {
+                    if (!parametersToExclude.Contains(item.Key))
+                    {
+                        dynamicParams.Add(item.Key, item.Value);
+                    }
+                }
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var multi = await connection.QueryMultipleAsync(StoredProcedure.GetDataForR2470outReport.ToString(), dynamicParams, commandType: CommandType.StoredProcedure))
+                    {
+                        var response = new R2470outReportResponse
+                        {
+                            Consignment = await multi.ReadFirstOrDefaultAsync<Consignment>(),
+                            ConsignmentRelease = await multi.ReadFirstOrDefaultAsync<ConsignmentRelease>(),
+                            EntryLinesMovesViewCalcList = (await multi.ReadAsync<EntryLinesMovesViewCalc>()).ToList(),
+                            Balance = await multi.ReadFirstOrDefaultAsync<int?>(),
+                            GoodList = await multi.ReadFirstOrDefaultAsync<GoodList>(),
+                            Manifest = manifest,
+                            ReportDtl = reportDtl,
+                            VarSequence = Convert.ToInt32(parameters["InvMovRecID"]),
+                            Driver = parameters["Driver"].ToString(),
+                            Remarks = parameters["Remarks"].ToString(),
+                            TruckID = parameters["TruckID"].ToString(),
+                            User = user
+                        };
+                        return response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Get Data For R2470out Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }

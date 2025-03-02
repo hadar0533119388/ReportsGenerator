@@ -20,7 +20,8 @@ namespace Reports.Infrastructure.Models
             GetDataForR912470Report,
             GetDataForR2470Report,
             GetDataForR24720Report,
-            GetDataForR1050MTReport
+            GetDataForR1050MTReport,
+            GetDataForR2470outReport
         }
     }
 }

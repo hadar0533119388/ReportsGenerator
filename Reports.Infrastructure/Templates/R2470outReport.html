@@ -1,0 +1,206 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תעודת מסירת טובין</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #fff;
+            direction: rtl;
+        }
+
+        .container {
+            background: #fff;
+            border: none;
+        }
+
+        .header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-decoration: underline;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .row {
+            margin-bottom: 10px;
+        }
+
+            .row .label {
+                display: inline;
+            }
+
+            .row .value {
+                font-weight: bold;
+            }
+
+            .row span {
+                display: inline-block;
+                min-width: auto;
+            }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-spacing: 15px;
+            table-layout: auto;
+            min-width: 100%;
+            max-width: 100%;
+            overflow: auto;
+            page-break-inside: auto;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #000;
+            /*white-space: nowrap;*/
+            word-wrap: break-word;
+            overflow: visible;
+            white-space: normal;
+        }
+
+          
+
+        th {
+            padding-bottom: 4px;
+            font-weight: normal;
+            vertical-align: bottom;
+        }
+
+        td {
+            font-weight: bold;
+        } 
+
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        {{{HeaderHtml}}}
+
+        {{{TitleHtml}}}
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">סוכן המכס:</span>
+                <span class="value">{{ConsignmentRelease_CustomsAgent}}</span>
+            </div>
+            <div style="flex: 1 1 17%; min-width: 200px; display: flex;">
+                <span class="label">מס' התרה:</span>
+                <span class="value">{{ConsignmentRelease_DeclarationID}}</span>
+            </div>
+        </div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">שם הלקוח:</span>
+                <span class="value">{{ConsignmentRelease_ImporterName}}</span>
+            </div>
+            <div style="flex: 1 1 17%; min-width: 200px; display: flex;">
+                <span class="label">תיק סוכן:</span>
+                <span class="value">{{ConsignmentRelease_CustomsAgentFile}}</span>
+            </div>
+        </div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">תאור המוצר:</span>
+                <span class="value">{{GoodList_GoodsName}}</span>
+            </div>
+            <div style="flex: 1 1 17%; min-width: 200px; display: flex;">
+                <span class="label">שטר מטען:</span>
+                <span class="value">{{Consignment_BOL}}</span>
+            </div>
+        </div>
+
+
+
+        <div class="table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>שורה</th>
+                        <th>מס' מזהה</th>
+                        <th>אריזה</th>
+                        <th>שוחררו</th>
+                        <th>מסירות קודמות</th>
+                        <th>יתרה למסירה</th>
+                        <th>מסירה נוכחית</th>
+                        <th>יתרה חדשה</th>
+                        <th>טרם הגיע</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#EntryLinesMovesViewCalcList}}
+                    <tr>
+                        <td>{{EntryLinesMovesViewCalcList_LineNum}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_LineID}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_LinePackType}}</td>
+                        <td dir="ltr">{{EntryLinesMovesViewCalcList_FormattedLineQuantityDeclared}}</td>
+                        <td dir="ltr">{{EntryLinesMovesViewCalcList_FormattedTotalQuantityMoveBefore}}</td>
+                        <td dir="ltr">{{EntryLinesMovesViewCalcList_FormattedBalanceDelivery}}</td>
+                        <td dir="ltr">{{EntryLinesMovesViewCalcList_FormattedTotalQuantityMoveNow}}</td>
+                        <td dir="ltr">{{EntryLinesMovesViewCalcList_FormattedNewBalanceDelivery}}</td>
+                        <td dir="ltr">{{EntryLinesMovesViewCalcList_FormattedNotArrived}}</td>
+                    </tr>
+                    {{/EntryLinesMovesViewCalcList}}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2"></td>
+                        <td>סה"כ:</td>
+                        <td dir="ltr">{{TotalLineQuantityDeclared}}</td>
+                        <td dir="ltr">{{TotalQuantityMoveBefore}}</td>
+                        <td dir="ltr">{{TotalBalanceDelivery}}</td>
+                        <td dir="ltr">{{TotalQuantityMoveNow}}</td>
+                        <td dir="ltr">{{TotalNewBalanceDelivery}}</td>
+                        <td dir="ltr">{{TotalNotArrived}}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="row" style="margin-bottom: 30px;">
+            <span class="label">יתרת כמות בגוש:</span> <span class="value" dir="ltr">{{Balance}}</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; page-break-inside: avoid; ">
+            <span>
+                אני החתום מטה, בעל הטובין או בא כוחו מצהיר בזאת כי קיבלתי את הטובין הרשומים בתעודה זו בכמות, בשלמות, ובמצב תקין ללא נזק.
+            </span>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <div style="flex: 1;">
+                    <div class="row">
+                        <span class="label">המוביל:</span> <span class="value">{{Driver}}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">מס' המשאית:</span> <span class="value">{{TruckID}}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">הערות:</span> <span class="value">{{Remarks}}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label">חתימה: ____________________</span> <span class="value"></span>
+                    </div>
+                </div>
+                <div style="flex: 1; text-align: right;">
+                    <div class="row">
+                        <span class="label">מפיק התעודה:</span> <span class="value">{{User}}</span>
+                    </div>                    
+                </div>
+            </div>
+            {{{FooterHtml}}}
+        </div>
+    </div>
+</body>
+</html>

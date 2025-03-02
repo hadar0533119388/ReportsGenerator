@@ -58,7 +58,7 @@ namespace Reports.Infrastructure.ReportGenerator
 
                 if (data != null && data.Any())
                 {
-                    string htmlContent = GenerateHtml(data, reportDtl.Template);
+                    string htmlContent = GenerateHtml(data, reportDtl);
                     byte[] pdf = await HtmlToPdfDocument(htmlContent);
 
                     if (request.IsPrint)
@@ -150,18 +150,36 @@ namespace Reports.Infrastructure.ReportGenerator
             return type.IsPrimitive || type.IsValueType || type == typeof(string) || type == typeof(decimal) || type == typeof(DateTime);
         }
 
-        private string GenerateHtml(Dictionary<string, object> data, string templateReport)
+        private string GenerateHtml(Dictionary<string, object> data, ReportDtl reportDtl)
         {
             try
             {
                 string basePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "Templates");
                 
-                string template = File.ReadAllText(Path.Combine(basePath, templateReport));
-                string headerTemplate = File.ReadAllText(Path.Combine(basePath, "Header.html"));
-                
+                string template = File.ReadAllText(Path.Combine(basePath, reportDtl.Template));
+
                 var stubble = new StubbleBuilder().Build();
 
-                data["HeaderHtml"] = stubble.Render(headerTemplate, data);
+
+                if (!string.IsNullOrEmpty(reportDtl.HeaderTemplate))
+                {
+                    string headerTemplate = File.ReadAllText(Path.Combine(basePath, reportDtl.HeaderTemplate));
+                    data["HeaderHtml"] = stubble.Render(headerTemplate, data);
+                }
+
+                if (!string.IsNullOrEmpty(reportDtl.TitleTemplate))
+                {
+                    string titleTemplate = File.ReadAllText(Path.Combine(basePath, reportDtl.TitleTemplate));
+                    data["TitleHtml"] = stubble.Render(titleTemplate, data);
+                }
+
+                if (!string.IsNullOrEmpty(reportDtl.FooterTemplate))
+                {
+                    string footerTemplate = File.ReadAllText(Path.Combine(basePath, reportDtl.FooterTemplate));
+                    data["FooterHtml"] = stubble.Render(footerTemplate, data);
+                }
+
+          
                 string html = stubble.Render(template, data);
 
                 logger.WriteLog("Generate HTML completed successfully.");
