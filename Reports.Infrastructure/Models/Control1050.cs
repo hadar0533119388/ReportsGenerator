@@ -70,7 +70,7 @@ namespace Reports.Infrastructure.Models
 
         public string Seal2Number { get; set; }
 
-        public short? MTingTypeMessage { get; set; }
+        public string MTingTypeMessage { get; set; }
 
         public int? Seal2CompletenessCode { get; set; }
 

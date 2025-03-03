@@ -41,5 +41,8 @@ namespace Reports.Infrastructure.Models
 
         public string FormattedLineQuantityDeclared => LineQuantityDeclared?.ToString("N0") ?? string.Empty;
 
+        public string FormattedLineQuantityMove => LineQuantityMove?.ToString("N0") ?? string.Empty;
+
+
     }
 }

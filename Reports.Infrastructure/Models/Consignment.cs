@@ -91,6 +91,14 @@ namespace Reports.Infrastructure.Models
 
         public double? FobValueNis { get; set; }
 
+        public double? FOBvaluePC { get; set; }
+
+        public double? ExchangeRate { get; set; }
+
+        public string CurrencyType { get; set; }
+
+        public DateTime? TaxationDate { get; set; }
+
         public double? GoodsPriceAmountInPrimaryCurrency { get; set; }
 
         public string PrimaryCurrency { get; set; }
@@ -110,6 +118,10 @@ namespace Reports.Infrastructure.Models
         public string ShipName { get; set; }
 
         public string Port { get; set; }
+
+        public short? F20units { get; set; }
+
+        public short? F40units { get; set; }
 
         public int? TEU { get; set; }
 
@@ -172,6 +184,20 @@ namespace Reports.Infrastructure.Models
         public DateTime? TransmissionTime3240 { get; set; }
 
         public DateTime? LastSuccessTrans3240 { get; set; }
+
+        public short? Mortgaged { get; set; }
+
+        public string Mortgagee { get; set; }
+
+        public DateTime? MortgagedDate { get; set; }
+
+        public DateTime? UnMortgagedDate { get; set; }
+
+        public DateTime? OpeningDate { get; set; }
+
+        public int? GeneralGoodsCode { get; set; }
+
+        public string MortgagedRemark { get; set; }
 
         public string FormattedDealValueNIS => DealValueNIS?.ToString("N0") ?? string.Empty;
 

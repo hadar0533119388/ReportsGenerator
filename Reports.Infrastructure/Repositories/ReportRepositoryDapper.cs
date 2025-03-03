@@ -53,7 +53,7 @@ namespace Reports.Infrastructure.Repositories
                                 throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
                             return R2470ReportResponse;
                         case StoredProcedure.GetDataForR24720Report:
-                            R24720ReportResponse R24720ReportResponse = await GetDataForR24720Report(request.Parameters, manifest);
+                            R24720ReportResponse R24720ReportResponse = await GetDataForR24720Report(request.Parameters, manifest, reportDtl);
                             if (R24720ReportResponse.Consignment == null)
                                 throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
                             return R24720ReportResponse;
@@ -67,6 +67,11 @@ namespace Reports.Infrastructure.Repositories
                             if (R2470outReportResponse.Consignment == null)
                                 throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
                             return R2470outReportResponse;
+                        case StoredProcedure.GetDataForMrtg24720Report:
+                            Mrtg24720ReportResponse Mrtg24720ReportResponse = await GetDataForMrtg24720Report(request.Parameters, manifest, reportDtl);
+                            if (Mrtg24720ReportResponse.Consignment == null)
+                                throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+                            return Mrtg24720ReportResponse;
 
                         default:
                             break;
@@ -184,15 +189,26 @@ namespace Reports.Infrastructure.Repositories
             }
         }
 
-        public async Task<R24720ReportResponse> GetDataForR24720Report(Dictionary<string, object> parameters, Manifest manifest)
+        public async Task<R24720ReportResponse> GetDataForR24720Report(Dictionary<string, object> parameters, Manifest manifest, ReportDtl reportDtl)
         {
             try
             {
+                var parametersToExclude = new HashSet<string> { "InvMovRecID" };
+
+                var dynamicParams = new DynamicParameters();
+
+                foreach (var item in parameters)
+                {
+                    if (!parametersToExclude.Contains(item.Key))
+                    {
+                        dynamicParams.Add(item.Key, item.Value);
+                    }
+                }
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
 
-                    using (var multi = await connection.QueryMultipleAsync(StoredProcedure.GetDataForR24720Report.ToString(), new DynamicParameters(parameters), commandType: CommandType.StoredProcedure))
+                    using (var multi = await connection.QueryMultipleAsync(StoredProcedure.GetDataForR24720Report.ToString(), dynamicParams, commandType: CommandType.StoredProcedure))
                     {
                         var response = new R24720ReportResponse
                         {
@@ -201,8 +217,10 @@ namespace Reports.Infrastructure.Repositories
                             ItemsList = (await multi.ReadAsync<Item>()).ToList(),
                             Control1050List = (await multi.ReadAsync<Control1050>()).ToList(),
                             Manifest = manifest,
-                            InvMovRecID = Convert.ToInt32(parameters["InvMovRecID"])
+                            ReportDtl = reportDtl,
+                            VarSequence = Convert.ToInt32(parameters["InvMovRecID"])
                     };
+                        
                         return response;
                     }
                 }
@@ -284,6 +302,47 @@ namespace Reports.Infrastructure.Repositories
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get Data For R2470out Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
+            }
+        }
+
+        public async Task<Mrtg24720ReportResponse> GetDataForMrtg24720Report(Dictionary<string, object> parameters, Manifest manifest, ReportDtl reportDtl)
+        {
+            try
+            {
+                var parametersToExclude = new HashSet<string> { "InvMovRecID" };
+
+                var dynamicParams = new DynamicParameters();
+
+                foreach (var item in parameters)
+                {
+                    if (!parametersToExclude.Contains(item.Key))
+                    {
+                        dynamicParams.Add(item.Key, item.Value);
+                    }
+                }
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var multi = await connection.QueryMultipleAsync(StoredProcedure.GetDataForMrtg24720Report.ToString(), dynamicParams, commandType: CommandType.StoredProcedure))
+                    {
+                        var response = new Mrtg24720ReportResponse
+                        {
+                            Consignment = await multi.ReadFirstOrDefaultAsync<Consignment>(),
+                            EntryLineMoveList = (await multi.ReadAsync<EntryLineMoveView>()).ToList(),
+                            ItemsList = (await multi.ReadAsync<Item>()).ToList(),
+                            Manifest = manifest,
+                            ReportDtl = reportDtl,
+                            VarSequence = Convert.ToInt32(parameters["InvMovRecID"])
+                        };
+                        return response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Get Data For Mrtg24720 Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }
