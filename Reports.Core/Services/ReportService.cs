@@ -1,4 +1,5 @@
-﻿using Reports.Infrastructure.DTOs;
+﻿using Newtonsoft.Json;
+using Reports.Infrastructure.DTOs;
 using Reports.Infrastructure.Exceptions;
 using Reports.Infrastructure.Logger;
 using Reports.Infrastructure.ReportGenerator;
@@ -26,7 +27,13 @@ namespace Reports.Core.Services
         {
             try
             {
-                logger.WriteLog($"Generate Report: {request.ReportID}, ManifestID: {request.ManifestID}, PrinterName: {request.PrinterName}, User: {request.User}. - Process started");
+                string parameters = "No parameters";
+                if (request.Parameters != null && request.Parameters.Any())
+                {
+                    parameters = JsonConvert.SerializeObject(request.Parameters, Formatting.Indented);
+                }
+
+                logger.WriteLog($"Generate Report: {request.ReportID}, ManifestID: {request.ManifestID}, PrinterName: {request.PrinterName}, User: {request.User}, Parameters: {parameters}. - Process started");
 
                 IReportGenerator reportGenerator = reportGeneratorFactory.GetReportGenerator(request.Type);
                 byte[] reportBytes = await reportGenerator.ExecuteAsync(request);

@@ -1,0 +1,203 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>טופס כניסה חלקית</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #fff;
+            direction: rtl;
+        }
+
+        .container {
+            background: #fff;
+            border: none;
+        }
+
+        .header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-decoration: underline;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .row {
+            margin-bottom: 10px;
+        }
+
+            .row .label {
+                display: inline;
+            }
+
+            .row .value {
+                font-weight: bold;
+            }
+
+            .row span {
+                display: inline-block;
+                min-width: auto;
+            }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-spacing: 15px;
+            table-layout: auto;
+            min-width: 100%;
+            max-width: 100%;
+            overflow: auto;
+            page-break-inside: avoid;
+        }
+
+        th, td {
+            /*min-width: 10px;*/
+            max-width: 200px;
+            padding: 7px;
+            text-align: right;
+            border-bottom: 1px solid #000;
+            word-wrap: break-word;
+            overflow: visible;
+            white-space: normal;
+        }
+
+
+
+        th {
+            padding-bottom: 4px;
+            font-weight: normal;
+            vertical-align: bottom;
+            /*max-width: 70px;*/
+        }
+
+        td {
+            font-weight: bold;
+        }
+
+        tfoot td, tfoot th {
+            max-width: none;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        {{{HeaderHtml}}}
+
+        {{{TitleHtml}}}
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">סוכן המכס:</span>
+                <span class="value">{{Consignment_BilledCA}}</span>
+            </div>
+            <div style="flex: 1 1 17%; min-width: 200px; display: flex;">
+                <span class="label">מס' הצהרה:</span>
+                <span class="value">{{Consignment_ConsignmentID}}</span>
+            </div>
+        </div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">שם הלקוח:</span>
+                <span class="value">{{Consignment_BilledImporter}}</span>
+            </div>
+            <div style="flex: 1 1 17%; min-width: 200px; display: flex;">
+                <span class="label">תיק סוכן:</span>
+                <span class="value">{{Consignment_CustomsAgentFile}}</span>
+            </div>
+        </div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">שם האניה:</span>
+                <span class="value">{{Consignment_ShipName}}</span>
+            </div>
+            <div style="flex: 1 1 17%; min-width: 200px; display: flex;">
+                <span class="label">מס' מצהר:</span>
+                <span class="value">{{Consignment_ShipVisitID}}</span>
+            </div>
+        </div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 33%; min-width: 200px; display: flex;"></div>
+            <div style="flex: 1 1 33%; min-width: 200px; display: flex;"></div>
+            <div style="flex: 1 1 33%; min-width: 200px; display: flex;">
+                <span class="label">שטר מטען:</span>
+                <span class="value">{{Consignment_BOL}}</span>
+            </div>
+        </div>
+
+        <div class="table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>שורת כניסה</th>
+                        <th>מזהה</th>
+                        <th>אריזה</th>
+                        <th>כמות במפרט</th>
+                        <th>התקבל עד היום</th>
+                        <th>מועד כניסה אחרונה</th>
+                        <th>יתרה לקבל</th>
+                        <th>כניסה נוכחית</th>
+                        <th>יתרה חדשה</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#EntryLineMoveList}}
+                    <tr>
+                        <td>{{EntryLineMoveList_LineNum}}</td>
+                        <td>{{EntryLineMoveList_LineID}}</td>
+                        <td>{{EntryLineMoveList_FormattedLineQuantityMove}}</td>
+                        <td>{{EntryLineMoveList_LineDesc}}</td>
+                        <td>{{EntryLineMoveList_LinePackType}}</td>
+                        <td></td>
+                        <td>{{EntryLineMoveList_Location}}</td>
+                        <td>{{EntryLineMoveList_Location}}</td>
+                        <td>{{EntryLineMoveList_Location}}</td>
+                    </tr>
+                    {{/EntryLineMoveList}}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2"></td>
+                        <td>סה"כ:</td>
+                        <td>{{SumQuantityMove}}</td>
+                        <td>{{Consignment_Volume}}</td>
+                        <td></td>
+                        <td>{{SumWeight}}</td>
+                        <td>{{SumWeight}}</td>
+                        <td>{{SumWeight}}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="row">
+            <span class="label">הערות:</span> <span class="value">{{Consignment_CustomerRemarks}}</span>
+        </div>
+
+        
+        <div style="display: flex; flex-direction: column; page-break-inside: avoid;">
+            <span>
+                אנו מאשרים שקבלנו לאחסנה במחסנינו את הטובין המפורטים להלן.
+                הטובין מאוחסנים בהתאם לתנאים הכלליים הקיימים במחסני הערובה שלנו
+                ואשר אושרו ע"י בית הדין לחוזים אחידים.
+            </span>
+            <span>פרוט התנאים ראה מעבר לדף.</span>
+            <span>הובטח נגד אש/אש ופריצה</span>
+            {{{FooterHtml}}}
+        </div>
+    </div>
+</body>
+</html>
