@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Reports.Infrastructure.DTOs;
+﻿using Reports.Infrastructure.DTOs;
 using Reports.Infrastructure.Exceptions;
 using Reports.Infrastructure.Logger;
 using Reports.Infrastructure.ReportGenerator;
@@ -27,11 +26,7 @@ namespace Reports.Core.Services
         {
             try
             {
-                string parameters = "No parameters";
-                if (request.Parameters != null && request.Parameters.Any())
-                {
-                    parameters = JsonConvert.SerializeObject(request.Parameters, Formatting.Indented);
-                }
+                string parameters = request.Parameters != null && request.Parameters.Any() ? string.Join(", ", request.Parameters.Select(kv => $"{kv.Key}: {kv.Value}")): "No parameters";
 
                 logger.WriteLog($"Generate Report: {request.ReportID}, ManifestID: {request.ManifestID}, PrinterName: {request.PrinterName}, User: {request.User}, Parameters: {parameters}. - Process started");
 
