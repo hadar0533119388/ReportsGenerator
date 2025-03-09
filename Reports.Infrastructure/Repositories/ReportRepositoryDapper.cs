@@ -72,6 +72,11 @@ namespace Reports.Infrastructure.Repositories
                             if (Mrtg24720ReportResponse.Consignment == null)
                                 throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
                             return Mrtg24720ReportResponse;
+                        case StoredProcedure.GetDataForR24720PReport:
+                            R24720PReportResponse R24720PReportResponse = await GetDataForR24720PReport(request.Parameters, manifest, reportDtl);
+                            if (R24720PReportResponse.Consignment == null)
+                                throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+                            return R24720PReportResponse;
 
                         default:
                             break;
@@ -343,6 +348,35 @@ namespace Reports.Infrastructure.Repositories
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get Data For Mrtg24720 Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
+            }
+        }
+
+        public async Task<R24720PReportResponse> GetDataForR24720PReport(Dictionary<string, object> parameters, Manifest manifest, ReportDtl reportDtl)
+        {
+            try
+            {                
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var multi = await connection.QueryMultipleAsync(StoredProcedure.GetDataForR24720PReport.ToString(), new DynamicParameters(parameters), commandType: CommandType.StoredProcedure))
+                    {
+                        var response = new R24720PReportResponse
+                        {
+                            Consignment = await multi.ReadFirstOrDefaultAsync<Consignment>(),
+                            EntryLinesMovesViewCalcList = (await multi.ReadAsync<EntryLinesMovesViewCalc>()).ToList(),
+                            Manifest = manifest,
+                            ReportDtl = reportDtl
+                        };
+
+                        return response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Get Data For R24720P Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }

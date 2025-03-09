@@ -147,37 +147,37 @@
                         <th>אריזה</th>
                         <th>כמות במפרט</th>
                         <th>התקבל עד היום</th>
-                        <th>מועד כניסה אחרונה</th>
+                        <th>ת.כניסה אחרונה</th>
                         <th>יתרה לקבל</th>
                         <th>כניסה נוכחית</th>
                         <th>יתרה חדשה</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {{#EntryLineMoveList}}
+                    {{#EntryLinesMovesViewCalcList}}
                     <tr>
-                        <td>{{EntryLineMoveList_LineNum}}</td>
-                        <td>{{EntryLineMoveList_LineID}}</td>
-                        <td>{{EntryLineMoveList_FormattedLineQuantityMove}}</td>
-                        <td>{{EntryLineMoveList_LineDesc}}</td>
-                        <td>{{EntryLineMoveList_LinePackType}}</td>
-                        <td></td>
-                        <td>{{EntryLineMoveList_Location}}</td>
-                        <td>{{EntryLineMoveList_Location}}</td>
-                        <td>{{EntryLineMoveList_Location}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_LineNum}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_LineID}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_LinePackType}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_FormattedLineQuantityDeclared}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_FormattedTotalQuantityMoveBefore}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_LastUpdated}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_FormattedBalanceDelivery}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_FormattedTotalQuantityMoveNow}}</td>
+                        <td>{{EntryLinesMovesViewCalcList_FormattedNewBalanceDelivery}}</td>
                     </tr>
-                    {{/EntryLineMoveList}}
+                    {{/EntryLinesMovesViewCalcList}}
                 </tbody>
                 <tfoot>
                     <tr>
                         <td colspan="2"></td>
                         <td>סה"כ:</td>
-                        <td>{{SumQuantityMove}}</td>
-                        <td>{{Consignment_Volume}}</td>
+                        <td>{{SumLineQuantityDeclared}}</td>
+                        <td>{{SumTotalQuantityMoveBefore}}</td>
                         <td></td>
-                        <td>{{SumWeight}}</td>
-                        <td>{{SumWeight}}</td>
-                        <td>{{SumWeight}}</td>
+                        <td>{{SumBalanceDelivery}}</td>
+                        <td>{{SumTotalQuantityMoveNow}}</td>
+                        <td>{{SumNewBalanceDelivery}}</td>
                     </tr>
                 </tfoot>
             </table>

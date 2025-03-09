@@ -26,6 +26,8 @@ namespace Reports.Infrastructure.DTOs
 
         public int? NotArrived { get; set; }
 
+        public DateTime? LastUpdated { get; set; }
+
         public string FormattedLineQuantityDeclared => LineQuantityDeclared?.ToString("N0") ?? string.Empty;
 
         public string FormattedTotalQuantityMoveBefore => TotalQuantityMoveBefore?.ToString("N0") ?? string.Empty;

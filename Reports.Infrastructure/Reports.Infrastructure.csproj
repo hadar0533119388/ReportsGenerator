@@ -248,6 +248,7 @@
     <Compile Include="DTOs\R1050MTReportResponse.cs" />
     <Compile Include="DTOs\R2470outReportResponse.cs" />
     <Compile Include="DTOs\R2470ReportResponse.cs" />
+    <Compile Include="DTOs\R24720PReportResponse.cs" />
     <Compile Include="DTOs\R24720ReportResponse.cs" />
     <Compile Include="DTOs\R912470ReportResponse.cs" />
     <Compile Include="DTOs\ReportRequest.cs" />

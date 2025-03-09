@@ -19,6 +19,7 @@ namespace Reports.Infrastructure.Repositories
         Task<R1050MTReportResponse> GetDataForR1050MTReport(Dictionary<string, object> parameters, Manifest manifest);
         Task<R2470outReportResponse> GetDataForR2470outReport(Dictionary<string, object> parameters, Manifest manifest, ReportDtl reportDtl, string User);
         Task<Mrtg24720ReportResponse> GetDataForMrtg24720Report(Dictionary<string, object> parameters, Manifest manifest, ReportDtl reportDtl);
+        Task<R24720PReportResponse> GetDataForR24720PReport(Dictionary<string, object> parameters, Manifest manifest, ReportDtl reportDtl);
 
 
 
