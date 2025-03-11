@@ -39,9 +39,21 @@ namespace Reports.Infrastructure.Models
 
         public int? RequesIdforSplited { get; set; }
 
+        public short? Mortgaged { get; set; }
+
+        public string exPackageType { get; set; }
+
+        public int? exReturned { get; set; }
+
+        public int? exDelivered { get; set; }
+
+        public int? Expr1 { get; set; }
+
         public string FormattedLineQuantityDeclared => LineQuantityDeclared?.ToString("N0") ?? string.Empty;
 
         public string FormattedLineQuantityMove => LineQuantityMove?.ToString("N0") ?? string.Empty;
+
+        public int SerialNumber { get; set; }
 
 
     }

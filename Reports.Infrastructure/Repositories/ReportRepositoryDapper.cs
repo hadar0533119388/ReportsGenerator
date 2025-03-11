@@ -77,6 +77,11 @@ namespace Reports.Infrastructure.Repositories
                             if (R24720PReportResponse.Consignment == null)
                                 throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
                             return R24720PReportResponse;
+                        case StoredProcedure.GetDataForR60ExOutReport:
+                            R60ExOutReportResponse R60ExOutReportResponse = await GetDataForR60ExOutReport(request.Parameters, manifest, reportDtl);
+                            if (R60ExOutReportResponse.Consignment == null)
+                                throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+                            return R60ExOutReportResponse;
 
                         default:
                             break;
@@ -377,6 +382,59 @@ namespace Reports.Infrastructure.Repositories
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get Data For R24720P Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
+            }
+        }
+
+        public async Task<R60ExOutReportResponse> GetDataForR60ExOutReport(Dictionary<string, object> parameters, Manifest manifest, ReportDtl reportDtl)
+        {
+            try
+            {
+                var parametersToExclude = new HashSet<string> { "DriverName", "DriverID", "LicensePlate" };
+
+                var dynamicParams = new DynamicParameters();
+
+                foreach (var item in parameters)
+                {
+                    if (!parametersToExclude.Contains(item.Key))
+                    {
+                        dynamicParams.Add(item.Key, item.Value);
+                    }
+                }
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var multi = await connection.QueryMultipleAsync(StoredProcedure.GetDataForR60ExOutReport.ToString(), dynamicParams, commandType: CommandType.StoredProcedure))
+                    {
+                        var response = new R60ExOutReportResponse
+                        {
+                            Consignment = await multi.ReadFirstOrDefaultAsync<Consignment>(),
+                            SpecialAct = await multi.ReadFirstOrDefaultAsync<SpecialAct>(),
+                            EntryLineMoveList = (await multi.ReadAsync<EntryLineMoveView>()).ToList(),
+                            Manifest = manifest,
+                            ReportDtl = reportDtl,
+                            VarSequence = Convert.ToInt32(parameters["RequestID"]),
+                            DriverName = parameters["DriverName"].ToString(),
+                            DriverID = parameters["DriverID"].ToString(),
+                            LicensePlate = parameters["LicensePlate"].ToString()
+                        };                        
+
+                        if (response.EntryLineMoveList != null)
+                        {
+                            for (int i = 0; i < response.EntryLineMoveList.Count; i++)
+                            {
+                                response.EntryLineMoveList[i].SerialNumber = i + 1;
+                            }
+                        }
+
+                        return response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Get Data For R60ExOut Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }
