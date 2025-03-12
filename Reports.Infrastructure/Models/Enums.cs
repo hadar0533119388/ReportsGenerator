@@ -24,7 +24,8 @@ namespace Reports.Infrastructure.Models
             GetDataForR2470outReport,
             GetDataForMrtg24720Report,
             GetDataForR24720PReport,
-            GetDataForR60ExOutReport
+            GetDataForR60ExOutReport,
+            GetDataForR60ExInReport
         }
     }
 }

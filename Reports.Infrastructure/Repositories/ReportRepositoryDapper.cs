@@ -82,6 +82,11 @@ namespace Reports.Infrastructure.Repositories
                             if (R60ExOutReportResponse.Consignment == null)
                                 throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
                             return R60ExOutReportResponse;
+                        case StoredProcedure.GetDataForR60ExInReport:
+                            R60ExInReportResponse R60ExInReportResponse = await GetDataForR60ExInReport(request.Parameters, manifest, reportDtl);
+                            if (R60ExInReportResponse.Consignment == null)
+                                throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+                            return R60ExInReportResponse;
 
                         default:
                             break;
@@ -435,6 +440,45 @@ namespace Reports.Infrastructure.Repositories
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get Data For R60ExOut Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
+            }
+        }
+
+        public async Task<R60ExInReportResponse> GetDataForR60ExInReport(Dictionary<string, object> parameters, Manifest manifest, ReportDtl reportDtl)
+        {
+            try
+            {                
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var multi = await connection.QueryMultipleAsync(StoredProcedure.GetDataForR60ExInReport.ToString(), new DynamicParameters(parameters), commandType: CommandType.StoredProcedure))
+                    {
+                        var response = new R60ExInReportResponse
+                        {
+                            Consignment = await multi.ReadFirstOrDefaultAsync<Consignment>(),
+                            SpecialAct = await multi.ReadFirstOrDefaultAsync<SpecialAct>(),
+                            EntryLineMoveList = (await multi.ReadAsync<EntryLineMoveView>()).ToList(),
+                            Manifest = manifest,
+                            ReportDtl = reportDtl,
+                            VarSequence = Convert.ToInt32(parameters["RequestID"])
+                        };
+
+                        if (response.EntryLineMoveList != null)
+                        {
+                            for (int i = 0; i < response.EntryLineMoveList.Count; i++)
+                            {
+                                response.EntryLineMoveList[i].SerialNumber = i + 1;
+                            }
+                        }
+
+                        return response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Get Data For R60ExIn Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }

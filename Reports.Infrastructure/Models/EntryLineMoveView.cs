@@ -55,6 +55,17 @@ namespace Reports.Infrastructure.Models
 
         public int SerialNumber { get; set; }
 
+        public int? NewBalance { get; set; }
+
+        public string FormattedExDelivered => exDelivered?.ToString("N0") ?? string.Empty;
+
+        public string FormattedExReturned => exReturned?.ToString("N0") ?? string.Empty;
+
+        public string FormattedNewBalance => NewBalance?.ToString("N0") ?? string.Empty;
+
+
+
+
 
     }
 }
