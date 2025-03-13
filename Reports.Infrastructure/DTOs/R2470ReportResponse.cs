@@ -19,9 +19,7 @@ namespace Reports.Infrastructure.DTOs
 
         public string TotalSum => ConsignmentReleaseItemList.Sum(item => item.Quantity)?.ToString("N0") ?? string.Empty;
 
-        public string CargoDescription => string.Join(", ", ConsignmentReleaseItemList.Select(item => item.CargoDescription));
-
-        public bool IsCustomsAgentIDNotSame => Consignment.CustomsAgentID != ConsignmentRelease.CustomsAgentID;
+        public bool IsCustomsAgentIDNotSame => Consignment.BilledCAID != ConsignmentRelease.CustomsAgentID;
 
         public string DatePrint => DateTime.Now.ToString("dd/MM/yyyy HH:mm");
 

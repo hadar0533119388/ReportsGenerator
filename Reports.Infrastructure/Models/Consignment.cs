@@ -205,7 +205,7 @@ namespace Reports.Infrastructure.Models
 
         public string FormattedGush => Gush.ToString().Length > 2 ? $"{Gush.ToString().Substring(0, 2)}/{Gush.ToString().Substring(2)}": Gush.ToString();
         
-        public string FormattedLastUpdatedDate => LastUpdatedDate?.ToString("dd/MM/yyyy HH:mm");
+        public string FormattedReleaseDate => ReleaseDate?.ToString("dd/MM/yyyy HH:mm");
 
 
 

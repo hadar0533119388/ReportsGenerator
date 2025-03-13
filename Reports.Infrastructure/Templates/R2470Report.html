@@ -89,7 +89,7 @@
 
         <div class="row">
             <span class="label">מס' התרה:</span> <span class="value">{{ConsignmentRelease_DeclarationID}}</span>
-            <span class="label">מתאריך:</span> <span class="value">{{ConsignmentRelease_FormattedLastUpdatedDate}}</span>
+            <span class="label">מתאריך:</span> <span class="value">{{ConsignmentRelease_FormattedReleaseDate}}</span>
         </div>
 
         <div class="row">
@@ -108,15 +108,21 @@
         </div>
 
         {{#IsCustomsAgentIDNotSame }}
+        <div style="border-bottom: 1px solid black; width: 100%; margin-top: 10px;"></div>
+
         <div class="row" style="text-align: center;">
-            <span class="label">הסוכן בגוש שונה מהסוכן בהתרה</span>
+            <span class="value">******** הסוכן בגוש שונה מהסוכן בהתרה ********</span>
         </div>
         {{/IsCustomsAgentIDNotSame}}
 
         <div class="row">
-            <span class="label">סוכן בגוש:</span> <span class="value">{{Consignment_CustomsAgent}}</span>
-            <span class="label">ח"פ:</span> <span class="value">{{Consignment_CustomsAgentID}}</span>
+            <span class="label">סוכן בגוש:</span> <span class="value">{{Consignment_BilledCA}}</span>
+            <span class="label">ח"פ:</span> <span class="value">{{Consignment_BilledCAID}}</span>
         </div>
+
+        {{#IsCustomsAgentIDNotSame }}
+        <div style="border-bottom: 1px solid black; width: 100%; margin-top: 10px;"></div>        
+        {{/IsCustomsAgentIDNotSame}}
 
         <div class="row">
             <span class="label">תיק סוכן:</span> <span class="value">{{ConsignmentRelease_CustomsAgentFile}}</span>
@@ -147,7 +153,7 @@
         </div>
 
         <div class="row">
-            <span class="label">תאור הטובין:</span> <span class="value">{{CargoDescription}}</span>
+            <span class="label">תאור הטובין:</span> <span class="value">{{ConsignmentRelease_ConsignmentDescription}}</span>
         </div>
         <div class="row">
             <span class="label">מצהר:</span> <span class="value">{{Consignment_ShipVisitID}}</span>
@@ -172,7 +178,7 @@
                         <td>{{ConsignmentReleaseItemList_PackageType}}</td>
                         <td>{{ConsignmentReleaseItemList_FormattedQuantity}}</td>
                         <td>{{ConsignmentReleaseItemList_FormattedItemWeight}}</td>
-                        <td>{{ConsignmentReleaseItemList_CargoDescription}}</td>
+                        <td>{{ConsignmentReleaseItemList_MarksAndNumbers}}</td>
                     </tr>
                     {{/ConsignmentReleaseItemList}}
                 </tbody>

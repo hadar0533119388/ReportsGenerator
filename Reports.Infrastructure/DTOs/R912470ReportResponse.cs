@@ -17,9 +17,7 @@ namespace Reports.Infrastructure.DTOs
 
         public List<Control1050> Control1050List { get; set; }
 
-        public string TotalSum => ItemsList.Sum(item => item.Quantity)?.ToString("N0") ?? string.Empty;
-
-        public string CargoDescription => string.Join(", ", ItemsList.Select(item => item.CargoDescription));
+        public string TotalSum => ItemsList.Sum(item => item.Quantity)?.ToString("N0") ?? string.Empty;        
 
         public string ContainersNumber => string.Join(", ", Control1050List.Select(item => item.ContainerNumber));
 

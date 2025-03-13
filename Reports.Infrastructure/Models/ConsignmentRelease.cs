@@ -97,7 +97,7 @@ namespace Reports.Infrastructure.Models
 
         public DateTime? TaxationDate { get; set; }
 
-        public string FormattedLastUpdatedDate => LastUpdatedDate?.ToString("dd/MM/yyyy HH:mm");
+        public string FormattedReleaseDate => ReleaseDate?.ToString("dd/MM/yyyy HH:mm");
 
         public string FormattedDealValueNIS => DealValueNIS?.ToString("N0") ?? string.Empty;
 
