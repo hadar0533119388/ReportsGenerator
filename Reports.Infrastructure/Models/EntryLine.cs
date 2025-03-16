@@ -32,5 +32,8 @@ namespace Reports.Infrastructure.Models
         public DateTime? LastUpdated { get; set; }
 
         public int? RequestID { get; set; }
+
+        public string FormattedLineQuantityDeclared => LineQuantityDeclared?.ToString("N0") ?? string.Empty;
+
     }
 }

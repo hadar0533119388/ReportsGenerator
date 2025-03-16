@@ -252,6 +252,7 @@
     <Compile Include="DTOs\R24720ReportResponse.cs" />
     <Compile Include="DTOs\R60ExInReportResponse.cs" />
     <Compile Include="DTOs\R60ExOutReportResponse.cs" />
+    <Compile Include="DTOs\R60splitReportResponse.cs" />
     <Compile Include="DTOs\R912470ReportResponse.cs" />
     <Compile Include="DTOs\ReportRequest.cs" />
     <Compile Include="Exceptions\CustomException.cs" />
@@ -315,6 +316,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Templates\R60ExOutReport.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Templates\R60splitReport.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Templates\R912470Report.html">
