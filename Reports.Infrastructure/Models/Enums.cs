@@ -26,7 +26,18 @@ namespace Reports.Infrastructure.Models
             GetDataForR24720PReport,
             GetDataForR60ExOutReport,
             GetDataForR60ExInReport,
-            GetDataForR60splitReport
+            GetDataForR60splitReport,
+            GetDataForSUMentries9Report
+        }
+
+        public enum ReportID
+        {
+            SUMentries9,
+        }
+
+        public enum GenerateExcel
+        {
+            GenerateSUMentries9Report
         }
     }
 }

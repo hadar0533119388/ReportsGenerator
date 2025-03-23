@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http;
+using static Reports.Infrastructure.Models.Enums;
 
 namespace Report.WebApi.Controllers
 {
@@ -26,6 +27,7 @@ namespace Report.WebApi.Controllers
                 if (!ModelState.IsValid || request == null)
                     throw new CustomException((int)ErrorMessages.ErrorCodes.InvalidInput, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.InvalidInput]);
 
+                ValidateReportParameters(request);
 
                 byte[] reportBytes = await ReportGeneratorFacade.GenerateReportAsync(request);
 
@@ -56,6 +58,26 @@ namespace Report.WebApi.Controllers
             {
                 return InternalServerError(ex);
             }
+        }
+        private void ValidateReportParameters(ReportRequest request)
+        {
+            var requiredParams = GetRequiredParametersForReport(request.ReportID);
+            var missingParams = requiredParams.Where(p => !request.Parameters.ContainsKey(p)).ToList();
+
+            if (missingParams.Any())
+            {
+                throw new ArgumentException($"Missing required parameters: {string.Join(", ", missingParams)}");
+            }
+        }
+
+        private List<string> GetRequiredParametersForReport(string reportID)
+        {
+            var reportRequirements = new Dictionary<string, List<string>>
+        {
+            { ReportID.SUMentries9.ToString(), new List<string> { "FromDate", "ToDate" } }
+        };
+
+            return reportRequirements.TryGetValue(reportID, out var requiredParams) ? requiredParams : new List<string>();
         }
     }
 }

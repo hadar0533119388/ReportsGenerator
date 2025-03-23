@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Reports.Infrastructure.DTOs;
+using Reports.Infrastructure.Models;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -9,6 +11,6 @@ namespace Reports.Infrastructure.Repositories
 {
     public interface IReportRepositoryAdoNet
     {
-        Task<DataSet> GetDataAsync(string reportID, Dictionary<string, object> Parameters);
+        DataSet GetData(ReportRequest request, ReportDtl reportDtl);
     }
 }
