@@ -27,7 +27,8 @@ namespace Reports.Infrastructure.Models
             GetDataForR60ExOutReport,
             GetDataForR60ExInReport,
             GetDataForR60splitReport,
-            GetDataForSUMentries9Report
+            GetDataForSUMentries9Report,
+            GetDataForInvBckReport
         }
 
         public enum ReportID
@@ -37,7 +38,8 @@ namespace Reports.Infrastructure.Models
 
         public enum GenerateExcel
         {
-            GenerateSUMentries9Report
+            GenerateSUMentries9Report,
+            GenerateInvBckReport
         }
     }
 }

@@ -39,7 +39,10 @@ namespace Reports.Infrastructure.ReportGenerator
                 if (reportDtl == null)
                     throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
 
-                Manifest manifest = await repositoryDapper.GetManifestByManifestIDAsync(request.ManifestID);               
+                Manifest manifest = await repositoryDapper.GetManifestByManifestIDAsync(request.ManifestID);
+
+                //For SP parameters
+                request.Parameters["ManifestID"] = request.ManifestID;
 
                 DataSet dataSet = repositoryAdoNet.GetData(request, reportDtl);
 
@@ -75,7 +78,9 @@ namespace Reports.Infrastructure.ReportGenerator
                     {
                         case Enums.GenerateExcel.GenerateSUMentries9Report:
                             return GenerateSUMentries9Report(dataSet, request, reportDtl, manifest);
-                            
+                        case Enums.GenerateExcel.GenerateInvBckReport:
+                            return GenerateInvBckReport(dataSet, reportDtl);
+
 
                         default:
                             break;
@@ -255,18 +260,18 @@ namespace Reports.Infrastructure.ReportGenerator
                     worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
                     worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
 
-
-                    worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A4:A{currentRow - 1})";
+                    int startCalc = 6;
+                    worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A{startCalc}:A{currentRow - 1})";
                     worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 6).FormulaA1 = $"SUM(F4:F{currentRow - 1})";
+                    worksheet.Cell(currentRow, 6).FormulaA1 = $"SUM(F{startCalc}:F{currentRow - 1})";
                     worksheet.Cell(currentRow, 6).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 9).FormulaA1 = $"SUM(I4:I{currentRow - 1})";
+                    worksheet.Cell(currentRow, 9).FormulaA1 = $"SUM(I{startCalc}:I{currentRow - 1})";
                     worksheet.Cell(currentRow, 9).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 11).FormulaA1 = $"SUM(K4:K{currentRow - 1})";
+                    worksheet.Cell(currentRow, 11).FormulaA1 = $"SUM(K{startCalc}:K{currentRow - 1})";
                     worksheet.Cell(currentRow, 11).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 12).FormulaA1 = $"SUM(L4:L{currentRow - 1})";
+                    worksheet.Cell(currentRow, 12).FormulaA1 = $"SUM(L{startCalc}:L{currentRow - 1})";
                     worksheet.Cell(currentRow, 12).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 13).FormulaA1 = $"SUM(M4:M{currentRow - 1})";
+                    worksheet.Cell(currentRow, 13).FormulaA1 = $"SUM(M{startCalc}:M{currentRow - 1})";
                     worksheet.Cell(currentRow, 13).Style.Font.Bold = true;
 
 
@@ -302,6 +307,60 @@ namespace Reports.Infrastructure.ReportGenerator
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
-       
+
+        private byte[] GenerateInvBckReport(DataSet dataSet, ReportDtl reportDtl)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
+
+                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+
+                    worksheet.RightToLeft = true;
+
+                    int currentRow = 1; 
+                    int numberOfColumns = dataSet.Tables[0].Columns.Count;
+
+
+                    var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
+                    ApplyTableStyleBoldHeadings(table1);
+
+
+                    currentRow += dataSet.Tables[0].Rows.Count + 1;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+
+                    int startCalc = 2;
+                    worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A{startCalc}:A{currentRow - 1})";
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 10).FormulaA1 = $"SUM(J{startCalc}:J{currentRow - 1})";
+                    worksheet.Cell(currentRow, 10).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 12).FormulaA1 = $"SUM(L{startCalc}:L{currentRow - 1})";
+                    worksheet.Cell(currentRow, 12).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 13).FormulaA1 = $"SUM(M{startCalc}:M{currentRow - 1})";
+                    worksheet.Cell(currentRow, 13).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 14).FormulaA1 = $"SUM(N{startCalc}:N{currentRow - 1})";
+                    worksheet.Cell(currentRow, 14).Style.Font.Bold = true;
+
+
+                    ApplyNumberFormatToSheet(worksheet);
+
+                    worksheet.Columns().AdjustToContents();
+                    
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        return stream.ToArray();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Generate InvBck Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
     }
 }
