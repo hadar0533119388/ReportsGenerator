@@ -36,9 +36,9 @@ namespace Reports.Infrastructure.Repositories
                 {
                     switch (storedProcedure)
                     {
-                        case StoredProcedure.GetDataForSUMentries9Report:
-                            parametersToRemove.Add("ManifestID");
-                            break;
+                        //case StoredProcedure.GetDataForSUMentries9Report:
+                        //    parametersToRemove.Add("ManifestID");
+                        //    break;
 
                         default:
                             break;

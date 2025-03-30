@@ -80,7 +80,8 @@ namespace Reports.Infrastructure.ReportGenerator
                             return GenerateSUMentries9Report(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateInvBckReport:
                             return GenerateInvBckReport(dataSet, reportDtl);
-
+                        case Enums.GenerateExcel.GenerateSUMvalindex3Report:
+                            return GenerateSUMvalindex3Report(dataSet, request, reportDtl, manifest);
 
                         default:
                             break;
@@ -110,8 +111,14 @@ namespace Reports.Infrastructure.ReportGenerator
             tableRange.Style.Border.OutsideBorder = XLBorderStyleValues.None;
 
             var headerRow = tableRange.Range(1, 1, 1, tableRange.ColumnCount());
-            headerRow.Style.Font.Bold = true;
-            headerRow.Style.Font.Underline = XLFontUnderlineValues.Single;
+            headerRow.Style.Font.Bold = true;            
+            headerRow.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+
+            foreach (var cell in headerRow.Cells())
+            {
+                cell.Style.Alignment.WrapText = true;
+                cell.Value = cell.Value.ToString().Replace(" ", "\n");
+            }
             
         }
 
@@ -359,6 +366,133 @@ namespace Reports.Infrastructure.ReportGenerator
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Generate InvBck Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+
+        private byte[] GenerateSUMvalindex3Report(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
+
+                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+
+                    worksheet.RightToLeft = true;
+
+                    worksheet.Style.Font.FontSize = 10;
+                   
+                    worksheet.PageSetup.FitToPages(1, 0);
+                    worksheet.PageSetup.PagesWide = 1;
+                    worksheet.PageSetup.PagesTall = 0;
+ 
+                    double marginSize = 0.5; 
+                    worksheet.PageSetup.Margins.Left = marginSize;
+                    worksheet.PageSetup.Margins.Right = marginSize;
+                    worksheet.PageSetup.Margins.Top = marginSize;
+                    worksheet.PageSetup.Margins.Bottom = marginSize;
+                    
+                    worksheet.PageSetup.CenterHorizontally = true;
+
+                    int currentRow = 1;
+                    int numberOfColumns = dataSet.Tables[0].Columns.Count;
+
+                    AddHeader2(worksheet, request, reportDtl, manifest, currentRow, numberOfColumns);
+
+                    currentRow += 2;
+
+                    StringBuilder filter = new StringBuilder();
+
+                    if (request.Parameters.ContainsKey("ValidityDate") && request.Parameters["ValidityDate"] != null)
+                    {
+                        string validityDate = request.Parameters["ValidityDate"]?.ToString();
+                        if (!string.IsNullOrEmpty(validityDate))
+                        {
+                            filter.Append($"נכון לתאריך: {validityDate}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("BilledImporterID") && request.Parameters["BilledImporterID"] != null)
+                    {
+                        string billedImporterID = request.Parameters["BilledImporterID"]?.ToString();
+                        if (!string.IsNullOrEmpty(billedImporterID))
+                        {
+                            string billedImporter = dataSet.Tables[1].Rows[0]["BilledImporter"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"ללקוח: {billedImporter} ({billedImporterID})");
+                        }
+                    }         
+
+                    worksheet.Cell(currentRow, 1).Value = filter.ToString();
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, numberOfColumns)).Merge();
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                    currentRow += 2;
+
+                    var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
+                    ApplyTableStyleBoldHeadings(table1);
+
+
+                    currentRow += dataSet.Tables[0].Rows.Count + 1;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+
+                    int startCalc = 6;
+                    worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A{startCalc}:A{currentRow - 1})";
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 7).FormulaA1 = $"SUM(G{startCalc}:G{currentRow - 1})";
+                    worksheet.Cell(currentRow, 7).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 8).FormulaA1 = $"SUM(H{startCalc}:H{currentRow - 1})";
+                    worksheet.Cell(currentRow, 8).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 9).FormulaA1 = $"SUM(I{startCalc}:I{currentRow - 1})";
+                    worksheet.Cell(currentRow, 9).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 10).FormulaA1 = $"SUM(J{startCalc}:J{currentRow - 1})";
+                    worksheet.Cell(currentRow, 10).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 11).FormulaA1 = $"SUM(K{startCalc}:K{currentRow - 1})";
+                    worksheet.Cell(currentRow, 11).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 12).FormulaA1 = $"SUM(L{startCalc}:L{currentRow - 1})";
+                    worksheet.Cell(currentRow, 12).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 13).FormulaA1 = $"SUM(M{startCalc}:M{currentRow - 1})";
+                    worksheet.Cell(currentRow, 13).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 14).FormulaA1 = $"SUM(N{startCalc}:N{currentRow - 1})";
+                    worksheet.Cell(currentRow, 14).Style.Font.Bold = true;
+
+                    ApplyNumberFormatToSheet(worksheet);
+                    
+                    worksheet.Columns().AdjustToContents();
+
+                    worksheet.Column(5).Width = 15; 
+                    worksheet.Column(6).Width = 15;
+
+                    foreach (var row in worksheet.Rows())
+                    {
+                        
+                        row.Cell(5).Style.Alignment.WrapText = true;
+                        row.Cell(6).Style.Alignment.WrapText = true;                       
+                    }
+
+                    
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        return stream.ToArray();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Generate SUMvalindex3 Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
