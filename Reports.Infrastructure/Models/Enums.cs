@@ -29,7 +29,8 @@ namespace Reports.Infrastructure.Models
             GetDataForR60splitReport,
             GetDataForSUMentries9Report,
             GetDataForInvBckReport,
-            GetDataForSUMvalindex3Report
+            GetDataForSUMvalindex3Report,
+            GetDataForSUMdeliveryGush8Report
         }
 
         public enum ReportID
@@ -41,7 +42,8 @@ namespace Reports.Infrastructure.Models
         {
             GenerateSUMentries9Report,
             GenerateInvBckReport,
-            GenerateSUMvalindex3Report
+            GenerateSUMvalindex3Report,
+            GenerateSUMdeliveryGush8Report
         }
     }
 }
