@@ -31,7 +31,8 @@ namespace Reports.Infrastructure.Models
             GetDataForInvBckReport,
             GetDataForSUMvalindex3Report,
             GetDataForSUMdeliveryGush8Report,
-            GetDataForSUMdeliveryLines8Report
+            GetDataForSUMdeliveryLines8Report,
+            GetDataForR2470outCollectReport
         }
 
         public enum ReportID

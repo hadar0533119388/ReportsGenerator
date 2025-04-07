@@ -92,6 +92,11 @@ namespace Reports.Infrastructure.Repositories
                             if (R60splitReportResponse.Consignment == null)
                                 throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
                             return R60splitReportResponse;
+                        case StoredProcedure.GetDataForR2470outCollectReport:
+                            R2470outCollectReportResponse R2470outCollectReportResponse = await GetDataForR2470outCollectReport(request.Parameters, manifest, reportDtl);
+                            if (R2470outCollectReportResponse.CollectReleaseMaster == null)
+                                throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+                            return R2470outCollectReportResponse;
 
                         default:
                             break;
@@ -514,6 +519,45 @@ namespace Reports.Infrastructure.Repositories
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Get Data For R60split Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
+            }
+        }
+
+        public async Task<R2470outCollectReportResponse> GetDataForR2470outCollectReport(Dictionary<string, object> parameters, Manifest manifest, ReportDtl reportDtl)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var multi = await connection.QueryMultipleAsync(StoredProcedure.GetDataForR2470outCollectReport.ToString(), new DynamicParameters(parameters), commandType: CommandType.StoredProcedure))
+                    {
+                        var response = new R2470outCollectReportResponse
+                        {
+                            CollectReleaseMaster = await multi.ReadFirstOrDefaultAsync<CollectReleaseMaster>(),
+                            CustomersList = await multi.ReadFirstOrDefaultAsync<CustomersList>(),
+                            EntryLineMoveList = (await multi.ReadAsync<EntryLineMoveView>()).ToList(),
+                            Manifest = manifest,
+                            ReportDtl = reportDtl,
+                            UnitedMovRef = Convert.ToInt32(parameters["UnitedMovRef"])
+                        };
+
+                        if (response.EntryLineMoveList != null)
+                        {
+                            for (int i = 0; i < response.EntryLineMoveList.Count; i++)
+                            {
+                                response.EntryLineMoveList[i].SerialNumber = i + 1;
+                            }
+                        }
+
+                        return response;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Get Data For R2470outCollect Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.DBAccessFailure, $"{ ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.DBAccessFailure] } : {ex.Message}");
             }
         }

@@ -271,6 +271,7 @@
     <Compile Include="DTOs\EntryLinesMovesViewCalc.cs" />
     <Compile Include="DTOs\Mrtg24720ReportResponse.cs" />
     <Compile Include="DTOs\R1050MTReportResponse.cs" />
+    <Compile Include="DTOs\R2470outCollectReportResponse.cs" />
     <Compile Include="DTOs\R2470outReportResponse.cs" />
     <Compile Include="DTOs\R2470ReportResponse.cs" />
     <Compile Include="DTOs\R24720PReportResponse.cs" />
@@ -285,10 +286,12 @@
     <Compile Include="Exceptions\ErrorResponse.cs" />
     <Compile Include="Logger\ILogger.cs" />
     <Compile Include="Logger\Logger.cs" />
+    <Compile Include="Models\CollectReleaseMaster.cs" />
     <Compile Include="Models\Consignment.cs" />
     <Compile Include="Models\ConsignmentRelease.cs" />
     <Compile Include="Models\ConsignmentReleaseItem.cs" />
     <Compile Include="Models\Control1050.cs" />
+    <Compile Include="Models\CustomersList.cs" />
     <Compile Include="Models\EntryLine.cs" />
     <Compile Include="Models\EntryLineMoveView.cs" />
     <Compile Include="Models\Enums.cs" />
@@ -323,6 +326,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Templates\R1050MTReport.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Templates\R2470outCollect.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Templates\R2470outReport.html">

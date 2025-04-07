@@ -63,6 +63,9 @@ namespace Reports.Infrastructure.Models
 
         public string FormattedNewBalance => NewBalance?.ToString("N0") ?? string.Empty;
 
+        public string FormattedGush { get; set; }
+        
+
 
 
 
