@@ -86,6 +86,8 @@ namespace Reports.Infrastructure.ReportGenerator
                             return GenerateSUMdeliveryGush8Report(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateSUMdeliveryLines8Report:
                             return GenerateSUMdeliveryLines8Report(dataSet, request, reportDtl, manifest);
+                        case Enums.GenerateExcel.GenerateCarsInShowroomsReport:
+                            return GenerateCarsInShowroomsReport(dataSet, request, reportDtl, manifest);
 
                         default:
                             break;
@@ -664,6 +666,77 @@ namespace Reports.Infrastructure.ReportGenerator
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Generate SUMdeliveryLines8 Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+
+        private byte[] GenerateCarsInShowroomsReport(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
+
+                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+
+                    worksheet.RightToLeft = true;
+
+                    int currentRow = 1;
+                    int numberOfColumns = dataSet.Tables[0].Columns.Count;
+
+                    AddHeader2(worksheet, request, reportDtl, manifest, currentRow, numberOfColumns + 4);
+
+                    currentRow += 2;
+
+                    StringBuilder filter = new StringBuilder();
+
+                    if (request.Parameters.ContainsKey("ValidityDate") && request.Parameters["ValidityDate"] != null)
+                    {
+                        string validityDate = request.Parameters["ValidityDate"]?.ToString();
+                        if (!string.IsNullOrEmpty(validityDate))
+                        {
+                            filter.Append($"נכון לתאריך: {validityDate}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("BilledImporterID") && request.Parameters["BilledImporterID"] != null)
+                    {
+                        string billedImporterID = request.Parameters["BilledImporterID"]?.ToString();
+                        if (!string.IsNullOrEmpty(billedImporterID))
+                        {
+                            string billedImporter = dataSet.Tables[1].Rows[0]["BilledImporter"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"ללקוח: {billedImporter} ({billedImporterID})");
+                        }
+                    }
+
+
+                    worksheet.Cell(currentRow, 1).Value = filter.ToString();
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, numberOfColumns + 4)).Merge();
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                    currentRow += 2;
+
+                    var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
+                    ApplyTableStyleBoldHeadings(table1);
+                    
+                    ApplyNumberFormatToSheet(worksheet);
+
+                    worksheet.Columns().AdjustToContents();
+                    worksheet.Column(1).Width += 5;
+                    
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        return stream.ToArray();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Generate CarsInShowrooms Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
