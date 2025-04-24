@@ -38,15 +38,10 @@ namespace Reports.Infrastructure.ReportGenerator
             this.chrome = chrome;
         }
 
-        public async Task<byte[]> ExecuteAsync(ReportRequest request)
+        public async Task<byte[]> ExecuteAsync(ReportRequest request, ReportDtl reportDtl)
         {
             try
-            {
-                //Get global data from ReportsDtl table
-                var reportDtl = await repositoryDapper.GetReportsDtlByReportIDAsync(request.ReportID);
-
-                if(reportDtl == null)
-                    throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+            {                
 
 
                 //Get data for a specific report

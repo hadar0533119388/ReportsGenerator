@@ -2,11 +2,13 @@
 using Reports.Infrastructure.Exceptions;
 using Reports.Infrastructure.Logger;
 using Reports.Infrastructure.ReportGenerator;
+using Reports.Infrastructure.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Reports.Infrastructure.Models.Enums;
 
 namespace Reports.Core.Services
 {
@@ -14,12 +16,15 @@ namespace Reports.Core.Services
     {
         private readonly IReportGeneratorFactory reportGeneratorFactory;
         private readonly ILogger logger;
+        private readonly IReportRepositoryDapper repositoryDapper;
 
 
-        public ReportService(IReportGeneratorFactory reportGeneratorFactory, ILogger logger)
+
+        public ReportService(IReportGeneratorFactory reportGeneratorFactory, ILogger logger, IReportRepositoryDapper repositoryDapper)
         {
             this.reportGeneratorFactory = reportGeneratorFactory;
             this.logger = logger;
+            this.repositoryDapper = repositoryDapper;
         }
 
         public async Task<byte[]> GetReportAsync(ReportRequest request)
@@ -30,8 +35,19 @@ namespace Reports.Core.Services
 
                 logger.WriteLog($"Generate Report: {request.ReportID}, ManifestID: {request.ManifestID}, PrinterName: {request.PrinterName}, User: {request.User}, Parameters: {parameters}. - Process started");
 
-                IReportGenerator reportGenerator = reportGeneratorFactory.GetReportGenerator(request.Type);
-                byte[] reportBytes = await reportGenerator.ExecuteAsync(request);
+                //Get global data from ReportsDtl table
+                var reportDtl = await repositoryDapper.GetReportsDtlByReportIDAsync(request.ReportID);
+
+                if (reportDtl == null)
+                    throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+
+                if (!Enum.TryParse<ReportType>(reportDtl.ReportFormat, out var reportType))
+                {
+                    throw new ArgumentException($"Invalid report format: {reportDtl.ReportFormat}");
+                }
+
+                IReportGenerator reportGenerator = reportGeneratorFactory.GetReportGenerator(reportType);
+                byte[] reportBytes = await reportGenerator.ExecuteAsync(request, reportDtl);
 
                 int status = reportBytes == null ? -1 : 0;
                 logger.WriteLog($"Generate Report: {request.ReportID}, ManifestID: {request.ManifestID}, PrinterName: {request.PrinterName}, User: {request.User}. - Process completed with status: {status}");

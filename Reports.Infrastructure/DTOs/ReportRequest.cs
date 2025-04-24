@@ -9,9 +9,7 @@ using static Reports.Infrastructure.Models.Enums;
 namespace Reports.Infrastructure.DTOs
 {
     public class ReportRequest
-    {
-        [Required]
-        public ReportType Type { get; set; }
+    {        
         [Required]
         public string ReportID { get; set; }
         [Required]

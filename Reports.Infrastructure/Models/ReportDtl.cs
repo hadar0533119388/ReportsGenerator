@@ -28,5 +28,9 @@ namespace Reports.Infrastructure.Models
         public string TitleTemplate { get; set; }
 
         public string FooterTemplate { get; set; }
+
+        public string ReportType { get; set; }
+
+        public string ReportFormat { get; set; }
     }
 }

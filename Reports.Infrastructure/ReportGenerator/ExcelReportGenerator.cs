@@ -29,15 +29,10 @@ namespace Reports.Infrastructure.ReportGenerator
             this.logger = logger;
         }
 
-        public async Task<byte[]> ExecuteAsync(ReportRequest request)
+        public async Task<byte[]> ExecuteAsync(ReportRequest request, ReportDtl reportDtl)
         {
             try
-            {
-                //Get global data from ReportsDtl table
-                var reportDtl = await repositoryDapper.GetReportsDtlByReportIDAsync(request.ReportID);
-
-                if (reportDtl == null)
-                    throw new CustomException((int)ErrorMessages.ErrorCodes.NoDataFound, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.NoDataFound]);
+            {               
 
                 Manifest manifest = await repositoryDapper.GetManifestByManifestIDAsync(request.ManifestID);
 
