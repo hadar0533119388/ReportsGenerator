@@ -7,8 +7,10 @@ using Reports.Infrastructure.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Printing;
 using System.Text;
 using System.Threading.Tasks;
 using static Reports.Infrastructure.Models.Enums;
@@ -21,18 +23,21 @@ namespace Reports.Infrastructure.ReportGenerator
         private readonly IReportRepositoryAdoNet repositoryAdoNet;
         private readonly IReportRepositoryDapper repositoryDapper;
         private readonly ILogger logger;
+        private readonly string libreOffice;
 
-        public ExcelReportGenerator(IReportRepositoryAdoNet repositoryAdoNet, IReportRepositoryDapper repositoryDapper, ILogger logger)
+
+        public ExcelReportGenerator(IReportRepositoryAdoNet repositoryAdoNet, IReportRepositoryDapper repositoryDapper, ILogger logger, string libreOffice)
         {
             this.repositoryAdoNet = repositoryAdoNet;
             this.repositoryDapper = repositoryDapper;
             this.logger = logger;
+            this.libreOffice = libreOffice;
         }
 
         public async Task<byte[]> ExecuteAsync(ReportRequest request, ReportDtl reportDtl)
         {
             try
-            {               
+            {
 
                 Manifest manifest = await repositoryDapper.GetManifestByManifestIDAsync(request.ManifestID);
 
@@ -41,9 +46,16 @@ namespace Reports.Infrastructure.ReportGenerator
 
                 DataSet dataSet = repositoryAdoNet.GetData(request, reportDtl);
 
-                if (dataSet != null && dataSet.Tables.Count > 0)
-                {                    
-                    return GenerateExcel(dataSet, request, reportDtl, manifest);
+                if (dataSet != null && dataSet.Tables.Count > 0 && dataSet.Tables[0].Rows.Count > 0)
+                {
+                    byte[] excel = GenerateExcel(dataSet, request, reportDtl, manifest);
+
+                    if (request.IsPrint)
+                    {
+                        PrintExcelDocument(excel, request.PrinterName);
+                    }
+
+                    return excel;
                 }
                 else
                 {
@@ -62,6 +74,101 @@ namespace Reports.Infrastructure.ReportGenerator
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
+
+        private void PrintExcelDocument(byte[] excel, string printerName)
+        {
+            string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".xlsx");
+
+            try
+            {
+                // Saving the Excel array to a temporary file
+                File.WriteAllBytes(tempFilePath, excel);
+
+                // Check the printer status
+                PrintQueueStatus status = GetPrinterStatus(printerName);
+
+                if (status.HasFlag(PrintQueueStatus.PaperProblem) ||
+                status.HasFlag(PrintQueueStatus.Offline) ||
+                status.HasFlag(PrintQueueStatus.Error))
+                {
+                    throw new CustomException((int)ErrorMessages.ErrorCodes.FailedToPrint, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.FailedToPrint]);
+                }
+
+                // Preparing to run LibreOffice for printing
+                var printProcess = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = libreOffice,
+                        Arguments = $"--headless --nologo --norestore --pt \"{printerName}\" \"{tempFilePath}\"",
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+
+                // Running the process (LibreOffice print)
+                using (Process process = new Process { StartInfo = printProcess.StartInfo })
+                {
+                    process.Start();
+
+                    string errorOutput = process.StandardError.ReadToEnd();
+                    string standardOutput = process.StandardOutput.ReadToEnd();
+
+                    process.WaitForExit();
+
+                    if (process.ExitCode != 0)
+                    {
+                        logger.WriteLog($"Error to Print Excel Document. ExitCode: {process.ExitCode}");
+                        if (!string.IsNullOrEmpty(errorOutput))
+                        {
+                            logger.WriteLog($"Error details: {errorOutput}");
+                        }
+                        throw new CustomException((int)ErrorMessages.ErrorCodes.FailedToPrint, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.FailedToPrint]);
+                    }
+                    else
+                    {
+                        logger.WriteLog($"Print Excel Document completed successfully.");
+                    }
+                }
+            }
+            catch (CustomException ex)
+            {
+                logger.WriteLog($"Error to Print Excel Document: {ex}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Print Excel Document: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.FailedToPrint, $"{ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.FailedToPrint]} : {ex.Message}");
+            }
+            finally
+            {
+                // Deleting the temporary file
+                if (File.Exists(tempFilePath))
+                {
+                    File.Delete(tempFilePath);
+                }
+            }
+        }
+
+        private PrintQueueStatus GetPrinterStatus(string printerName)
+        {
+            using (LocalPrintServer printServer = new LocalPrintServer())
+            {
+                foreach (PrintQueue queue in printServer.GetPrintQueues())
+                {
+                    if (queue.Name.Equals(printerName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        queue.Refresh();
+                        return queue.QueueStatus;
+                    }
+                }
+            }
+            throw new CustomException((int)ErrorMessages.ErrorCodes.UnknownPrinter, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.UnknownPrinter]);
+        }
+
 
         private byte[] GenerateExcel(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
         {
@@ -112,7 +219,7 @@ namespace Reports.Infrastructure.ReportGenerator
             tableRange.Style.Border.OutsideBorder = XLBorderStyleValues.None;
 
             var headerRow = tableRange.Range(1, 1, 1, tableRange.ColumnCount());
-            headerRow.Style.Font.Bold = true;            
+            headerRow.Style.Font.Bold = true;
             headerRow.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
 
             foreach (var cell in headerRow.Cells())
@@ -120,7 +227,7 @@ namespace Reports.Infrastructure.ReportGenerator
                 cell.Style.Alignment.WrapText = true;
                 cell.Value = cell.Value.ToString().Replace(" ", "\n");
             }
-            
+
         }
 
         //Bold data and unbold headings
@@ -131,12 +238,12 @@ namespace Reports.Infrastructure.ReportGenerator
             tableRange.Style.Font.FontColor = XLColor.Black;
             tableRange.Style.Border.OutsideBorder = XLBorderStyleValues.None;
 
-            
+
             var headerRow = tableRange.Range(1, 1, 1, tableRange.ColumnCount());
             headerRow.Style.Font.Bold = false;
             headerRow.Style.Font.Underline = XLFontUnderlineValues.Single;
 
-            
+
             var dataRange = tableRange.DataRange;
             dataRange.Style.Font.Bold = true;
         }
@@ -301,7 +408,7 @@ namespace Reports.Infrastructure.ReportGenerator
 
                     worksheet.Columns().AdjustToContents();
 
-                    
+
                     using (var stream = new MemoryStream())
                     {
                         workbook.SaveAs(stream);
@@ -328,7 +435,7 @@ namespace Reports.Infrastructure.ReportGenerator
 
                     worksheet.RightToLeft = true;
 
-                    int currentRow = 1; 
+                    int currentRow = 1;
                     int numberOfColumns = dataSet.Tables[0].Columns.Count;
 
 
@@ -356,7 +463,7 @@ namespace Reports.Infrastructure.ReportGenerator
                     ApplyNumberFormatToSheet(worksheet);
 
                     worksheet.Columns().AdjustToContents();
-                    
+
                     using (var stream = new MemoryStream())
                     {
                         workbook.SaveAs(stream);
@@ -384,17 +491,15 @@ namespace Reports.Infrastructure.ReportGenerator
                     worksheet.RightToLeft = true;
 
                     worksheet.Style.Font.FontSize = 10;
-                   
+
                     worksheet.PageSetup.FitToPages(1, 0);
-                    worksheet.PageSetup.PagesWide = 1;
-                    worksheet.PageSetup.PagesTall = 0;
- 
-                    double marginSize = 0.5; 
+
+                    double marginSize = 0.5;
                     worksheet.PageSetup.Margins.Left = marginSize;
                     worksheet.PageSetup.Margins.Right = marginSize;
                     worksheet.PageSetup.Margins.Top = marginSize;
                     worksheet.PageSetup.Margins.Bottom = marginSize;
-                    
+
                     worksheet.PageSetup.CenterHorizontally = true;
 
                     int currentRow = 1;
@@ -424,7 +529,56 @@ namespace Reports.Infrastructure.ReportGenerator
                             if (filter.Length > 0) filter.Append(", ");
                             filter.Append($"ללקוח: {billedImporter} ({billedImporterID})");
                         }
-                    }         
+                    }
+
+                    if (request.Parameters.ContainsKey("ConsignmentID") && request.Parameters["ConsignmentID"] != null)
+                    {
+                        string consignmentID = request.Parameters["ConsignmentID"]?.ToString();
+                        if (!string.IsNullOrEmpty(consignmentID))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"הצהרת אחסנה: {consignmentID}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("FromGush") && request.Parameters["FromGush"] != null && request.Parameters.ContainsKey("ToGush") && request.Parameters["ToGush"] != null)
+                    {
+                        string fromGush = request.Parameters["FromGush"]?.ToString();
+                        string toGush = request.Parameters["ToGush"]?.ToString();
+                        if (!string.IsNullOrEmpty(fromGush) && !string.IsNullOrEmpty(toGush))
+                        {
+                            string FormattedFromGush = fromGush.Length > 2 ? $"{fromGush.Substring(0, 2)}/{fromGush.Substring(2)}" : fromGush;
+                            string FormattedToGush = toGush.Length > 2 ? $"{toGush.Substring(0, 2)}/{toGush.Substring(2)}" : toGush;
+
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מגוש {FormattedFromGush} עד גוש {FormattedToGush}");
+                        }
+                    }
+                    if (request.Parameters.ContainsKey("GushState") && request.Parameters["GushState"] != null)
+                    {
+                        if (int.TryParse(request.Parameters["GushState"].ToString(), out int gushState))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+
+                            if (gushState == 0)
+                            {
+                                filter.Append("גושים פתוחים בלבד");
+                            }
+                            else if (gushState == 1)
+                            {
+                                filter.Append("גושים סגורים בלבד");
+                            }
+                        }
+                    }
+                    if (request.Parameters.ContainsKey("ZeroInventory") && request.Parameters["ZeroInventory"] != null)
+                    {
+                        string zeroInventory = request.Parameters["ZeroInventory"]?.ToString();
+                        if (!string.IsNullOrEmpty(zeroInventory) && zeroInventory == "Y")
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append("כולל יתרות אפס");
+                        }
+                    }
 
                     worksheet.Cell(currentRow, 1).Value = filter.ToString();
                     worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, numberOfColumns)).Merge();
@@ -468,6 +622,12 @@ namespace Reports.Infrastructure.ReportGenerator
 
                     worksheet.Cell(currentRow, 14).FormulaA1 = $"SUM(N{startCalc}:N{currentRow - 1})";
                     worksheet.Cell(currentRow, 14).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 15).FormulaA1 = $"SUM(O{startCalc}:O{currentRow - 1})";
+                    worksheet.Cell(currentRow, 15).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 16).FormulaA1 = $"SUM(P{startCalc}:P{currentRow - 1})";
+                    worksheet.Cell(currentRow, 16).Style.Font.Bold = true;
 
                     ApplyNumberFormatToSheet(worksheet);
                     

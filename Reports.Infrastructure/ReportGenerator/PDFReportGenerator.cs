@@ -243,7 +243,7 @@ namespace Reports.Infrastructure.ReportGenerator
                 status.HasFlag(PrintQueueStatus.Offline) ||
                 status.HasFlag(PrintQueueStatus.Error))
                 {
-                    throw new CustomException((int)ErrorMessages.ErrorCodes.UnknownPrinter, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.UnknownPrinter]);
+                    throw new CustomException((int)ErrorMessages.ErrorCodes.FailedToPrint, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.FailedToPrint]);
                 }
 
                 // Creating parameters for running SumatraPDF for printing

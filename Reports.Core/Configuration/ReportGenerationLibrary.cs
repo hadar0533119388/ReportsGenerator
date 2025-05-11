@@ -25,6 +25,7 @@ namespace Reports.Core.Configuration
                 string logDirectory = ConfigurationManager.AppSettings["ReportsLogPath"];
                 string sumatraPDF = ConfigurationManager.AppSettings["SumatraPDF"];
                 string chrome = ConfigurationManager.AppSettings["Chrome"];
+                string libreOffice = ConfigurationManager.AppSettings["LibreOffice"];
 
                 builder.RegisterType<ReportRepositoryAdoNet>().As<IReportRepositoryAdoNet>()
                        .WithParameter("connectionString", request.ConnectionString)
@@ -39,7 +40,9 @@ namespace Reports.Core.Configuration
                        .WithParameter("chrome", chrome)
                        .InstancePerDependency();
 
-                builder.RegisterType<ExcelReportGenerator>().As<IReportGenerator>().InstancePerDependency();
+                builder.RegisterType<ExcelReportGenerator>().As<IReportGenerator>()
+                       .WithParameter("libreOffice", libreOffice)
+                       .InstancePerDependency();
                 builder.RegisterType<ReportGeneratorFactory>().As<IReportGeneratorFactory>().SingleInstance();
                 builder.RegisterType<ReportService>().As<IReportService>().InstancePerDependency();
                 builder.RegisterType<Logger>().As<ILogger>().WithParameter("logDirectory", logDirectory).SingleInstance();
