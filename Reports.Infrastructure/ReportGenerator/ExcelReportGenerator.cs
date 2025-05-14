@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Printing;
@@ -190,6 +191,8 @@ namespace Reports.Infrastructure.ReportGenerator
                             return GenerateSUMdeliveryLines8Report(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateCarsInShowroomsReport:
                             return GenerateCarsInShowroomsReport(dataSet, request, reportDtl, manifest);
+                        case Enums.GenerateExcel.GenerateSUMqntIndex1Report:
+                            return GenerateSUMqntIndex1Report(dataSet, request, reportDtl, manifest);
 
                         default:
                             break;
@@ -892,6 +895,156 @@ namespace Reports.Infrastructure.ReportGenerator
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Generate CarsInShowrooms Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+
+        private byte[] GenerateSUMqntIndex1Report(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
+
+                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+
+                    worksheet.RightToLeft = true;
+
+                    worksheet.Style.Font.FontSize = 10;
+
+                    worksheet.PageSetup.FitToPages(1, 0);
+
+                    double marginSize = 0.5;
+                    worksheet.PageSetup.Margins.Left = marginSize;
+                    worksheet.PageSetup.Margins.Right = marginSize;
+                    worksheet.PageSetup.Margins.Top = marginSize;
+                    worksheet.PageSetup.Margins.Bottom = marginSize;
+
+                    worksheet.PageSetup.CenterHorizontally = true;
+
+                    int currentRow = 1;
+                    int numberOfColumns = dataSet.Tables[0].Columns.Count;
+
+                    AddHeader2(worksheet, request, reportDtl, manifest, currentRow, numberOfColumns);
+
+                    currentRow += 2;
+
+                    StringBuilder filter = new StringBuilder();
+
+                    if (request.Parameters.ContainsKey("ValidityDate") && request.Parameters["ValidityDate"] != null)
+                    {
+                        string validityDate = request.Parameters["ValidityDate"]?.ToString();
+                        if (!string.IsNullOrEmpty(validityDate) && DateTime.TryParseExact(validityDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                        {
+                            filter.Append($"נכון לתאריך: {parsedDate:dd/MM/yy}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("BilledImporterID") && request.Parameters["BilledImporterID"] != null)
+                    {
+                        string billedImporterID = request.Parameters["BilledImporterID"]?.ToString();
+                        if (!string.IsNullOrEmpty(billedImporterID))
+                        {
+                            string billedImporter = dataSet.Tables[1].Rows[0]["BilledImporter"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"ללקוח: {billedImporter} ({billedImporterID})");
+                        }
+                    }                    
+
+                    if (request.Parameters.ContainsKey("FromGush") && request.Parameters["FromGush"] != null && request.Parameters.ContainsKey("ToGush") && request.Parameters["ToGush"] != null)
+                    {
+                        string fromGush = request.Parameters["FromGush"]?.ToString();
+                        string toGush = request.Parameters["ToGush"]?.ToString();
+                        if (!string.IsNullOrEmpty(fromGush) && !string.IsNullOrEmpty(toGush))
+                        {
+                            string FormattedFromGush = fromGush.Length > 2 ? $"{fromGush.Substring(0, 2)}/{fromGush.Substring(2)}" : fromGush;
+                            string FormattedToGush = toGush.Length > 2 ? $"{toGush.Substring(0, 2)}/{toGush.Substring(2)}" : toGush;
+
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מגוש {FormattedFromGush} עד גוש {FormattedToGush}");
+                        }
+                    }
+                    
+                    if (request.Parameters.ContainsKey("GushState") && request.Parameters["GushState"] != null)
+                    {
+                        if (int.TryParse(request.Parameters["GushState"].ToString(), out int gushState))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+
+                            if (gushState == 0)
+                            {
+                                filter.Append("גושים פתוחים בלבד");
+                            }
+                            else if (gushState == 1)
+                            {
+                                filter.Append("גושים סגורים בלבד");
+                            }
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("FromInv") && request.Parameters["FromInv"] != null && request.Parameters.ContainsKey("ToInv") && request.Parameters["ToInv"] != null)
+                    {
+                        string fromInv = Convert.ToInt32(request.Parameters["FromInv"]).ToString("N0");
+                        string toInv = Convert.ToInt32(request.Parameters["ToInv"]).ToString("N0");
+                        if (!string.IsNullOrEmpty(fromInv) && !string.IsNullOrEmpty(toInv))
+                        {                            
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מיתרה {fromInv} עד יתרה {toInv}");
+                        }
+                    }
+
+                    worksheet.Cell(currentRow, 1).Value = filter.ToString();
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, numberOfColumns)).Merge();
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                    currentRow += 2;
+
+                    var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
+                    ApplyTableStyleBoldHeadings(table1);
+
+
+                    currentRow += dataSet.Tables[0].Rows.Count + 1;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+
+                    int startCalc = 6;
+                    worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A{startCalc}:A{currentRow - 1})";
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 8).FormulaA1 = $"SUM(H{startCalc}:H{currentRow - 1})";
+                    worksheet.Cell(currentRow, 8).Style.Font.Bold = true;
+
+
+                    ApplyNumberFormatToSheet(worksheet);
+
+                    worksheet.Columns().AdjustToContents();
+
+                    worksheet.Column(4).Width = 25;
+                    worksheet.Column(5).Width = 25;
+                    worksheet.Column(6).Width = 25;
+                    worksheet.Column(13).Width = 25;
+
+                    foreach (var row in worksheet.Rows())
+                    {
+                        row.Cell(4).Style.Alignment.WrapText = true;
+                        row.Cell(5).Style.Alignment.WrapText = true;
+                        row.Cell(6).Style.Alignment.WrapText = true;
+                        row.Cell(13).Style.Alignment.WrapText = true;
+                    }
+                    
+
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        return stream.ToArray();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Generate SUMqntIndex1 Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
