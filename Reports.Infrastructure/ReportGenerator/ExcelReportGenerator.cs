@@ -290,6 +290,25 @@ namespace Reports.Infrastructure.ReportGenerator
             }
         }
 
+        private void PrintSettings(IXLWorksheet worksheet)
+        {
+            worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+
+            worksheet.RightToLeft = true;
+
+            worksheet.Style.Font.FontSize = 10;
+
+            worksheet.PageSetup.FitToPages(1, 0);
+
+            double marginSize = 0.5;
+            worksheet.PageSetup.Margins.Left = marginSize;
+            worksheet.PageSetup.Margins.Right = marginSize;
+            worksheet.PageSetup.Margins.Top = marginSize;
+            worksheet.PageSetup.Margins.Bottom = marginSize;
+
+            worksheet.PageSetup.CenterHorizontally = true;
+        }
+
         private byte[] GenerateSUMentries9Report(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
         {
             try
@@ -489,21 +508,7 @@ namespace Reports.Infrastructure.ReportGenerator
                 {
                     var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
 
-                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
-
-                    worksheet.RightToLeft = true;
-
-                    worksheet.Style.Font.FontSize = 10;
-
-                    worksheet.PageSetup.FitToPages(1, 0);
-
-                    double marginSize = 0.5;
-                    worksheet.PageSetup.Margins.Left = marginSize;
-                    worksheet.PageSetup.Margins.Right = marginSize;
-                    worksheet.PageSetup.Margins.Top = marginSize;
-                    worksheet.PageSetup.Margins.Bottom = marginSize;
-
-                    worksheet.PageSetup.CenterHorizontally = true;
+                    PrintSettings(worksheet);
 
                     int currentRow = 1;
                     int numberOfColumns = dataSet.Tables[0].Columns.Count;
@@ -669,9 +674,7 @@ namespace Reports.Infrastructure.ReportGenerator
                 {
                     var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
 
-                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
-
-                    worksheet.RightToLeft = true;
+                    PrintSettings(worksheet);
 
                     int currentRow = 1;
                     int numberOfColumns = dataSet.Tables[0].Columns.Count;
@@ -682,13 +685,15 @@ namespace Reports.Infrastructure.ReportGenerator
 
                     StringBuilder filter = new StringBuilder();
 
-                    if (request.Parameters.ContainsKey("FromDate") && request.Parameters["FromDate"] != null)
+                    if (request.Parameters.ContainsKey("FromDate") && request.Parameters["FromDate"] != null && request.Parameters.ContainsKey("ToDate") && request.Parameters["ToDate"] != null)
                     {
                         string fromDate = request.Parameters["FromDate"]?.ToString();
                         string toDate = request.Parameters["ToDate"]?.ToString();
-                        if (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate))
+                        if (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate) 
+                            && DateTime.TryParseExact(fromDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedFromDate)
+                            && DateTime.TryParseExact(toDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedToDate))
                         {
-                            filter.Append($"לתקופה: {toDate} - {fromDate}");
+                            filter.Append($"לתקופה: {parsedToDate:dd/MM/yy} - {parsedFromDate:dd/MM/yy}");
                         }
                     }
 
@@ -907,21 +912,7 @@ namespace Reports.Infrastructure.ReportGenerator
                 {
                     var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
 
-                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
-
-                    worksheet.RightToLeft = true;
-
-                    worksheet.Style.Font.FontSize = 10;
-
-                    worksheet.PageSetup.FitToPages(1, 0);
-
-                    double marginSize = 0.5;
-                    worksheet.PageSetup.Margins.Left = marginSize;
-                    worksheet.PageSetup.Margins.Right = marginSize;
-                    worksheet.PageSetup.Margins.Top = marginSize;
-                    worksheet.PageSetup.Margins.Bottom = marginSize;
-
-                    worksheet.PageSetup.CenterHorizontally = true;
+                    PrintSettings(worksheet);
 
                     int currentRow = 1;
                     int numberOfColumns = dataSet.Tables[0].Columns.Count;
