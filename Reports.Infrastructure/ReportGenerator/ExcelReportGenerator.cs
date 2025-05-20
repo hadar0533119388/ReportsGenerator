@@ -757,26 +757,26 @@ namespace Reports.Infrastructure.ReportGenerator
                 {
                     var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
 
-                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
-
-                    worksheet.RightToLeft = true;
+                    PrintSettings(worksheet);
 
                     int currentRow = 1;
                     int numberOfColumns = dataSet.Tables[0].Columns.Count;
 
-                    AddHeader2(worksheet, request, reportDtl, manifest, currentRow, numberOfColumns + 1);
+                    AddHeader2(worksheet, request, reportDtl, manifest, currentRow, numberOfColumns);
 
                     currentRow += 2;
 
                     StringBuilder filter = new StringBuilder();
 
-                    if (request.Parameters.ContainsKey("FromDate") && request.Parameters["FromDate"] != null)
+                    if (request.Parameters.ContainsKey("FromDate") && request.Parameters["FromDate"] != null && request.Parameters.ContainsKey("ToDate") && request.Parameters["ToDate"] != null)
                     {
                         string fromDate = request.Parameters["FromDate"]?.ToString();
                         string toDate = request.Parameters["ToDate"]?.ToString();
-                        if (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate))
+                        if (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate)
+                            && DateTime.TryParseExact(fromDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedFromDate)
+                            && DateTime.TryParseExact(toDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedToDate))
                         {
-                            filter.Append($"לתקופה: {toDate} - {fromDate}");
+                            filter.Append($"לתקופה: {parsedToDate:dd/MM/yy} - {parsedFromDate:dd/MM/yy}");
                         }
                     }
 
@@ -789,6 +789,30 @@ namespace Reports.Infrastructure.ReportGenerator
                             string code = dataSet.Tables[1].Rows[0]["Code"].ToString();
                             if (filter.Length > 0) filter.Append(", ");
                             filter.Append($"ללקוח: {billedImporter} ({code})");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("FromGush") && request.Parameters["FromGush"] != null && request.Parameters.ContainsKey("ToGush") && request.Parameters["ToGush"] != null)
+                    {
+                        string fromGush = request.Parameters["FromGush"]?.ToString();
+                        string toGush = request.Parameters["ToGush"]?.ToString();
+                        if (!string.IsNullOrEmpty(fromGush) && !string.IsNullOrEmpty(toGush))
+                        {
+                            string FormattedFromGush = fromGush.Length > 2 ? $"{fromGush.Substring(0, 2)}/{fromGush.Substring(2)}" : fromGush;
+                            string FormattedToGush = toGush.Length > 2 ? $"{toGush.Substring(0, 2)}/{toGush.Substring(2)}" : toGush;
+
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מגוש {FormattedFromGush} עד גוש {FormattedToGush}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("LineID") && request.Parameters["LineID"] != null)
+                    {
+                        string lineID = request.Parameters["LineID"]?.ToString();
+                        if (!string.IsNullOrEmpty(lineID))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"למזהה: {lineID}");
                         }
                     }
 
@@ -809,16 +833,16 @@ namespace Reports.Infrastructure.ReportGenerator
                     worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
 
                     int startCalc = 6;
-                    worksheet.Cell(currentRow, 3).FormulaA1 = $"COUNTA(C{startCalc}:C{currentRow - 1})";
-                    worksheet.Cell(currentRow, 3).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 5).FormulaA1 = $"COUNTA(E{startCalc}:E{currentRow - 1})";
+                    worksheet.Cell(currentRow, 5).Style.Font.Bold = true;
 
-                    worksheet.Cell(currentRow, 9).FormulaA1 = $"SUM(I{startCalc}:I{currentRow - 1})";
-                    worksheet.Cell(currentRow, 9).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 12).FormulaA1 = $"SUM(L{startCalc}:L{currentRow - 1})";
+                    worksheet.Cell(currentRow, 12).Style.Font.Bold = true;
 
                     ApplyNumberFormatToSheet(worksheet);
 
                     worksheet.Columns().AdjustToContents();
-                    
+                                        
                     using (var stream = new MemoryStream())
                     {
                         workbook.SaveAs(stream);
