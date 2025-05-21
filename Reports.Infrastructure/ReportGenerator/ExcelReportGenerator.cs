@@ -317,9 +317,7 @@ namespace Reports.Infrastructure.ReportGenerator
                 {
                     var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
 
-                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
-
-                    worksheet.RightToLeft = true;
+                    PrintSettings(worksheet);
 
                     int currentRow = 1;
                     int numberOfColumns = dataSet.Tables[0].Columns.Count;
@@ -330,13 +328,15 @@ namespace Reports.Infrastructure.ReportGenerator
 
                     StringBuilder filter = new StringBuilder();
 
-                    if (request.Parameters.ContainsKey("FromDate") && request.Parameters["FromDate"] != null)
+                    if (request.Parameters.ContainsKey("FromDate") && request.Parameters["FromDate"] != null && request.Parameters.ContainsKey("ToDate") && request.Parameters["ToDate"] != null)
                     {
                         string fromDate = request.Parameters["FromDate"]?.ToString();
                         string toDate = request.Parameters["ToDate"]?.ToString();
-                        if (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate))
+                        if (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate)
+                            && DateTime.TryParseExact(fromDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedFromDate)
+                            && DateTime.TryParseExact(toDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedToDate))
                         {
-                            filter.Append($"לתקופה: {toDate} - {fromDate}");
+                            filter.Append($"לתקופה: {parsedToDate:dd/MM/yy} - {parsedFromDate:dd/MM/yy}");
                         }
                     }
 
@@ -358,7 +358,7 @@ namespace Reports.Infrastructure.ReportGenerator
                         {
                             string customsAgent = dataSet.Tables[3].Rows[0]["CustomsAgent"].ToString();
                             if (filter.Length > 0) filter.Append(", ");
-                            filter.Append($"ללקוח: {customsAgent} ({customsAgentID})");
+                            filter.Append($"סוכן: {customsAgent} ({customsAgentID})");
                         }
                     }
 
@@ -368,7 +368,7 @@ namespace Reports.Infrastructure.ReportGenerator
                         if (!string.IsNullOrEmpty(customsAgentFile))
                         {
                             if (filter.Length > 0) filter.Append(", ");
-                            filter.Append($"לתיק סוכן: {customsAgentFile}");
+                            filter.Append($"תיק סוכן: {customsAgentFile}");
                         }
                     }
 
@@ -379,6 +379,31 @@ namespace Reports.Infrastructure.ReportGenerator
                         {
                             if (filter.Length > 0) filter.Append(", ");
                             filter.Append($"למזהה מטען: {consignmentID}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("FromGush") && request.Parameters["FromGush"] != null && request.Parameters.ContainsKey("ToGush") && request.Parameters["ToGush"] != null)
+                    {
+                        string fromGush = request.Parameters["FromGush"]?.ToString();
+                        string toGush = request.Parameters["ToGush"]?.ToString();
+                        if (!string.IsNullOrEmpty(fromGush) && !string.IsNullOrEmpty(toGush))
+                        {
+                            string FormattedFromGush = fromGush.Length > 2 ? $"{fromGush.Substring(0, 2)}/{fromGush.Substring(2)}" : fromGush;
+                            string FormattedToGush = toGush.Length > 2 ? $"{toGush.Substring(0, 2)}/{toGush.Substring(2)}" : toGush;
+
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מגוש {FormattedFromGush} עד גוש {FormattedToGush}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("DeliverySiteNumber") && request.Parameters["DeliverySiteNumber"] != null)
+                    {
+                        string deliverySiteNumber = request.Parameters["DeliverySiteNumber"]?.ToString();
+                        if (!string.IsNullOrEmpty(deliverySiteNumber))
+                        {
+                            string name = dataSet.Tables[4].Rows[0]["Name"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"אתר מקור: {name}");
                         }
                     }
 
@@ -400,37 +425,40 @@ namespace Reports.Infrastructure.ReportGenerator
                     int startCalc = 6;
                     worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A{startCalc}:A{currentRow - 1})";
                     worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 6).FormulaA1 = $"SUM(F{startCalc}:F{currentRow - 1})";
-                    worksheet.Cell(currentRow, 6).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 9).FormulaA1 = $"SUM(I{startCalc}:I{currentRow - 1})";
-                    worksheet.Cell(currentRow, 9).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, 8).FormulaA1 = $"SUM(H{startCalc}:H{currentRow - 1})";
+                    worksheet.Cell(currentRow, 8).Style.Font.Bold = true;
+
                     worksheet.Cell(currentRow, 11).FormulaA1 = $"SUM(K{startCalc}:K{currentRow - 1})";
                     worksheet.Cell(currentRow, 11).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 12).FormulaA1 = $"SUM(L{startCalc}:L{currentRow - 1})";
-                    worksheet.Cell(currentRow, 12).Style.Font.Bold = true;
+
                     worksheet.Cell(currentRow, 13).FormulaA1 = $"SUM(M{startCalc}:M{currentRow - 1})";
                     worksheet.Cell(currentRow, 13).Style.Font.Bold = true;
 
-
-
+                    worksheet.Cell(currentRow, 14).FormulaA1 = $"SUM(N{startCalc}:N{currentRow - 1})";
+                    worksheet.Cell(currentRow, 14).Style.Font.Bold = true;
+   
+                    worksheet.Cell(currentRow, 15).FormulaA1 = $"SUM(O{startCalc}:O{currentRow - 1})";
+                    worksheet.Cell(currentRow, 15).Style.Font.Bold = true;
+                 
                     currentRow += 3;
 
-                    worksheet.Cell(currentRow, 7).Value = "ריכוז כניסות לפי מטבע";
-                    worksheet.Cell(currentRow, 7).Style.Font.Underline = XLFontUnderlineValues.Single;
-                    worksheet.Cell(currentRow, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-                    worksheet.Cell(currentRow, 7).Style.Font.Bold = true;
-                    worksheet.Range(worksheet.Cell(currentRow, 7), worksheet.Cell(currentRow, 9)).Merge();
+                    worksheet.Cell(currentRow, 9).Value = "ריכוז כניסות לפי מטבע";
+                    worksheet.Cell(currentRow, 9).Style.Font.Underline = XLFontUnderlineValues.Single;
+                    worksheet.Cell(currentRow, 9).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Cell(currentRow, 9).Style.Font.Bold = true;
+                    worksheet.Range(worksheet.Cell(currentRow, 9), worksheet.Cell(currentRow, 11)).Merge();
 
                     currentRow++;
 
-                    var table2 = worksheet.Cell(currentRow, 7).InsertTable(dataSet.Tables[1]);
+                    var table2 = worksheet.Cell(currentRow, 9).InsertTable(dataSet.Tables[1]);
                     ApplyTableStyleBoldData(table2);
 
                     ApplyNumberFormatToSheet(worksheet);
 
                     worksheet.Columns().AdjustToContents();
 
-
+                    
                     using (var stream = new MemoryStream())
                     {
                         workbook.SaveAs(stream);
