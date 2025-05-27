@@ -182,7 +182,7 @@ namespace Reports.Infrastructure.ReportGenerator
                         case Enums.GenerateExcel.GenerateSUMentries9Report:
                             return GenerateSUMentries9Report(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateInvBckReport:
-                            return GenerateInvBckReport(dataSet, reportDtl);
+                            return GenerateInvBckReport(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateSUMvalindex3Report:
                             return GenerateSUMvalindex3Report(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateSUMdeliveryGush8Report:
@@ -309,6 +309,34 @@ namespace Reports.Infrastructure.ReportGenerator
             worksheet.PageSetup.CenterHorizontally = true;
         }
 
+        private void RemoveColumnsByName(DataTable table, List<string> columnsToRemove)
+        {
+            foreach (var columnName in columnsToRemove)
+            {
+                if (table.Columns.Contains(columnName))
+                {
+                    table.Columns.Remove(columnName);
+                }
+            }
+        }
+
+        private void ApplyColumnFormula(IXLWorksheet worksheet, DataTable dataTable, int startCalc, int endCalc, List<string> columnNames, string formulaType)
+        {
+            foreach (var columnName in columnNames)
+            {
+                if (!dataTable.Columns.Contains(columnName))
+                    continue;
+
+                int columnIndex = dataTable.Columns[columnName].Ordinal + 1;
+                string columnLetter = XLHelper.GetColumnLetterFromNumber(columnIndex);
+                string formula = $"{formulaType}({columnLetter}{startCalc}:{columnLetter}{endCalc - 1})";
+
+
+                worksheet.Cell(endCalc, columnIndex).FormulaA1 = formula;
+                worksheet.Cell(endCalc, columnIndex).Style.Font.Bold = true;
+            }
+        }
+       
         private byte[] GenerateSUMentries9Report(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
         {
             try
@@ -423,24 +451,11 @@ namespace Reports.Infrastructure.ReportGenerator
                     worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
 
                     int startCalc = 6;
-                    worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A{startCalc}:A{currentRow - 1})";
-                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    var columnsToSum = new List<string> { "כמות", "ערך בש\"ח", "20”", "40”", "נפח" };
+                    var columnsToCount = new List<string> { "גוש" };
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToSum, "SUM");
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToCount, "COUNTA");
 
-                    worksheet.Cell(currentRow, 8).FormulaA1 = $"SUM(H{startCalc}:H{currentRow - 1})";
-                    worksheet.Cell(currentRow, 8).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 11).FormulaA1 = $"SUM(K{startCalc}:K{currentRow - 1})";
-                    worksheet.Cell(currentRow, 11).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 13).FormulaA1 = $"SUM(M{startCalc}:M{currentRow - 1})";
-                    worksheet.Cell(currentRow, 13).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 14).FormulaA1 = $"SUM(N{startCalc}:N{currentRow - 1})";
-                    worksheet.Cell(currentRow, 14).Style.Font.Bold = true;
-   
-                    worksheet.Cell(currentRow, 15).FormulaA1 = $"SUM(O{startCalc}:O{currentRow - 1})";
-                    worksheet.Cell(currentRow, 15).Style.Font.Bold = true;
-                 
                     currentRow += 3;
 
                     worksheet.Cell(currentRow, 9).Value = "ריכוז כניסות לפי מטבע";
@@ -473,7 +488,7 @@ namespace Reports.Infrastructure.ReportGenerator
             }
         }
 
-        private byte[] GenerateInvBckReport(DataSet dataSet, ReportDtl reportDtl)
+        private byte[] GenerateInvBckReport(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
         {
             try
             {
@@ -481,13 +496,141 @@ namespace Reports.Infrastructure.ReportGenerator
                 {
                     var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
 
-                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+                    PrintSettings(worksheet);
 
-                    worksheet.RightToLeft = true;
+                    if (request.IsPrint)
+                    {
+                        var columnsToDelete = new List<string> { "תיק סוכן", "כמות מוצהרת", "הערה" };
+                        RemoveColumnsByName(dataSet.Tables[0], columnsToDelete);
+                    }
 
                     int currentRow = 1;
                     int numberOfColumns = dataSet.Tables[0].Columns.Count;
 
+                    AddHeader2(worksheet, request, reportDtl, manifest, currentRow, numberOfColumns);
+
+                    currentRow += 2;
+
+                    StringBuilder filter = new StringBuilder();
+
+                    if (request.Parameters.ContainsKey("ValidityDate") && request.Parameters["ValidityDate"] != null)
+                    {
+                        string validityDate = request.Parameters["ValidityDate"]?.ToString();
+                        if (!string.IsNullOrEmpty(validityDate) && DateTime.TryParseExact(validityDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+                        {
+                            filter.Append($"נכון לתאריך: {parsedDate:dd/MM/yy}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("BilledImporterID") && request.Parameters["BilledImporterID"] != null)
+                    {
+                        string billedImporterID = request.Parameters["BilledImporterID"]?.ToString();
+                        if (!string.IsNullOrEmpty(billedImporterID))
+                        {
+                            string billedImporter = dataSet.Tables[1].Rows[0]["BilledImporter"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"ללקוח: {billedImporter} ({billedImporterID})");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("BilledCAID") && request.Parameters["BilledCAID"] != null)
+                    {
+                        string billedCAID = request.Parameters["BilledCAID"]?.ToString();
+                        if (!string.IsNullOrEmpty(billedCAID))
+                        {
+                            string billedCA = dataSet.Tables[2].Rows[0]["BilledCA"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"לסוכן: {billedCA} ({billedCAID})");
+                        }
+                    }
+
+
+                    if (request.Parameters.ContainsKey("CustomsAgentFile") && request.Parameters["CustomsAgentFile"] != null)
+                    {
+                        string customsAgentFile = request.Parameters["CustomsAgentFile"]?.ToString();
+                        if (!string.IsNullOrEmpty(customsAgentFile))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"תיק: {customsAgentFile}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("FromGush") && request.Parameters["FromGush"] != null && request.Parameters.ContainsKey("ToGush") && request.Parameters["ToGush"] != null)
+                    {
+                        string fromGush = request.Parameters["FromGush"]?.ToString();
+                        string toGush = request.Parameters["ToGush"]?.ToString();
+                        if (!string.IsNullOrEmpty(fromGush) && !string.IsNullOrEmpty(toGush))
+                        {
+                            string FormattedFromGush = fromGush.Length > 2 ? $"{fromGush.Substring(0, 2)}/{fromGush.Substring(2)}" : fromGush;
+                            string FormattedToGush = toGush.Length > 2 ? $"{toGush.Substring(0, 2)}/{toGush.Substring(2)}" : toGush;
+
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מגוש {FormattedFromGush} עד גוש {FormattedToGush}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("GushState") && request.Parameters["GushState"] != null)
+                    {
+                        if (int.TryParse(request.Parameters["GushState"].ToString(), out int gushState))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+
+                            if (gushState == 0)
+                            {
+                                filter.Append("גושים פתוחים בלבד");
+                            }
+                            else if (gushState == 1)
+                            {
+                                filter.Append("גושים סגורים בלבד");
+                            }
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("Location") && request.Parameters["Location"] != null)
+                    {
+                        string location = request.Parameters["Location"]?.ToString();
+                        if (!string.IsNullOrEmpty(location))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"איתור: {location}");
+                        }
+                    }
+
+
+                    if (request.Parameters.ContainsKey("FromInv") && request.Parameters["FromInv"] != null && request.Parameters.ContainsKey("ToInv") && request.Parameters["ToInv"] != null)
+                    {
+                        string fromInv = Convert.ToInt32(request.Parameters["FromInv"]).ToString("N0");
+                        string toInv = Convert.ToInt32(request.Parameters["ToInv"]).ToString("N0");
+                        if (!string.IsNullOrEmpty(fromInv) && !string.IsNullOrEmpty(toInv))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מיתרה {fromInv} עד יתרה {toInv}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("Pcustoms") && request.Parameters["Pcustoms"] != null)
+                    {
+                        string pcustoms = request.Parameters["Pcustoms"]?.ToString();
+
+                        if (filter.Length > 0) filter.Append(", ");
+
+                        if (pcustoms == "VN")
+                        {
+                            filter.Append("לרכבים בלבד");
+                        }
+                        else if (pcustoms == "PP")
+                        {
+                            filter.Append("ללא רכבים בלבד");
+                        }
+
+                    }
+
+                    worksheet.Cell(currentRow, 1).Value = filter.ToString();
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, numberOfColumns)).Merge();
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                    currentRow += 2;
 
                     var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
                     ApplyTableStyleBoldHeadings(table1);
@@ -497,23 +640,17 @@ namespace Reports.Infrastructure.ReportGenerator
                     worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
                     worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
 
-                    int startCalc = 2;
-                    worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A{startCalc}:A{currentRow - 1})";
-                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 10).FormulaA1 = $"SUM(J{startCalc}:J{currentRow - 1})";
-                    worksheet.Cell(currentRow, 10).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 12).FormulaA1 = $"SUM(L{startCalc}:L{currentRow - 1})";
-                    worksheet.Cell(currentRow, 12).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 13).FormulaA1 = $"SUM(M{startCalc}:M{currentRow - 1})";
-                    worksheet.Cell(currentRow, 13).Style.Font.Bold = true;
-                    worksheet.Cell(currentRow, 14).FormulaA1 = $"SUM(N{startCalc}:N{currentRow - 1})";
-                    worksheet.Cell(currentRow, 14).Style.Font.Bold = true;
+                    int startCalc = 6;
+                    var columnsToSum = new List<string> { "כמות מוצהרת", "טרם התקבל", "יתרה", "כמות משוחררת", "כמות ברשות מוסמכת" };
+                    var columnsToCount = new List<string> { "גוש" };
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToSum, "SUM");
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToCount, "COUNTA");
 
 
                     ApplyNumberFormatToSheet(worksheet);
 
                     worksheet.Columns().AdjustToContents();
-
+                    
                     using (var stream = new MemoryStream())
                     {
                         workbook.SaveAs(stream);
@@ -550,9 +687,9 @@ namespace Reports.Infrastructure.ReportGenerator
                     if (request.Parameters.ContainsKey("ValidityDate") && request.Parameters["ValidityDate"] != null)
                     {
                         string validityDate = request.Parameters["ValidityDate"]?.ToString();
-                        if (!string.IsNullOrEmpty(validityDate))
+                        if (!string.IsNullOrEmpty(validityDate) && DateTime.TryParseExact(validityDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                         {
-                            filter.Append($"נכון לתאריך: {validityDate}");
+                            filter.Append($"נכון לתאריך: {parsedDate:dd/MM/yy}");
                         }
                     }
 
@@ -632,38 +769,10 @@ namespace Reports.Infrastructure.ReportGenerator
                     worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
 
                     int startCalc = 6;
-                    worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A{startCalc}:A{currentRow - 1})";
-                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 7).FormulaA1 = $"SUM(G{startCalc}:G{currentRow - 1})";
-                    worksheet.Cell(currentRow, 7).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 8).FormulaA1 = $"SUM(H{startCalc}:H{currentRow - 1})";
-                    worksheet.Cell(currentRow, 8).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 9).FormulaA1 = $"SUM(I{startCalc}:I{currentRow - 1})";
-                    worksheet.Cell(currentRow, 9).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 10).FormulaA1 = $"SUM(J{startCalc}:J{currentRow - 1})";
-                    worksheet.Cell(currentRow, 10).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 11).FormulaA1 = $"SUM(K{startCalc}:K{currentRow - 1})";
-                    worksheet.Cell(currentRow, 11).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 12).FormulaA1 = $"SUM(L{startCalc}:L{currentRow - 1})";
-                    worksheet.Cell(currentRow, 12).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 13).FormulaA1 = $"SUM(M{startCalc}:M{currentRow - 1})";
-                    worksheet.Cell(currentRow, 13).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 14).FormulaA1 = $"SUM(N{startCalc}:N{currentRow - 1})";
-                    worksheet.Cell(currentRow, 14).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 15).FormulaA1 = $"SUM(O{startCalc}:O{currentRow - 1})";
-                    worksheet.Cell(currentRow, 15).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 16).FormulaA1 = $"SUM(P{startCalc}:P{currentRow - 1})";
-                    worksheet.Cell(currentRow, 16).Style.Font.Bold = true;
+                    var columnsToSum = new List<string> { "כמות בפתיחה", "ערך בפתיחה", "נפח בפתיחה", "שטח בפתיחה", "משקל בפתיחה", "יתרת כמות", "יתרת ערך", "יתרת נפח", "יתרת שטח", "יתרת משקל" };
+                    var columnsToCount = new List<string> { "גוש" };
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToSum, "SUM");
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToCount, "COUNTA");
 
                     ApplyNumberFormatToSheet(worksheet);
                     
@@ -753,11 +862,10 @@ namespace Reports.Infrastructure.ReportGenerator
                     worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
 
                     int startCalc = 6;
-                    worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A{startCalc}:A{currentRow - 1})";
-                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 9).FormulaA1 = $"SUM(I{startCalc}:I{currentRow - 1})";
-                    worksheet.Cell(currentRow, 9).Style.Font.Bold = true;
+                    var columnsToSum = new List<string> { "כמות" };
+                    var columnsToCount = new List<string> { "מונה" };
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToSum, "SUM");
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToCount, "COUNTA");
 
                     ApplyNumberFormatToSheet(worksheet);
 
@@ -861,11 +969,10 @@ namespace Reports.Infrastructure.ReportGenerator
                     worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
 
                     int startCalc = 6;
-                    worksheet.Cell(currentRow, 5).FormulaA1 = $"COUNTA(E{startCalc}:E{currentRow - 1})";
-                    worksheet.Cell(currentRow, 5).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 12).FormulaA1 = $"SUM(L{startCalc}:L{currentRow - 1})";
-                    worksheet.Cell(currentRow, 12).Style.Font.Bold = true;
+                    var columnsToSum = new List<string> { "כמות שנמסרה מהמזהה" };
+                    var columnsToCount = new List<string> { "תעודת מסירה" };
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToSum, "SUM");
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToCount, "COUNTA");
 
                     ApplyNumberFormatToSheet(worksheet);
 
@@ -909,9 +1016,9 @@ namespace Reports.Infrastructure.ReportGenerator
                     if (request.Parameters.ContainsKey("ValidityDate") && request.Parameters["ValidityDate"] != null)
                     {
                         string validityDate = request.Parameters["ValidityDate"]?.ToString();
-                        if (!string.IsNullOrEmpty(validityDate))
+                        if (!string.IsNullOrEmpty(validityDate) && DateTime.TryParseExact(validityDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                         {
-                            filter.Append($"נכון לתאריך: {validityDate}");
+                            filter.Append($"נכון לתאריך: {parsedDate:dd/MM/yy}");
                         }
                     }
 
@@ -1053,11 +1160,10 @@ namespace Reports.Infrastructure.ReportGenerator
                     worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
 
                     int startCalc = 6;
-                    worksheet.Cell(currentRow, 1).FormulaA1 = $"COUNTA(A{startCalc}:A{currentRow - 1})";
-                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
-
-                    worksheet.Cell(currentRow, 8).FormulaA1 = $"SUM(H{startCalc}:H{currentRow - 1})";
-                    worksheet.Cell(currentRow, 8).Style.Font.Bold = true;
+                    var columnsToSum = new List<string> { "יתרת כמות" };
+                    var columnsToCount = new List<string> { "גוש" };
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToSum, "SUM");
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToCount, "COUNTA");
 
 
                     ApplyNumberFormatToSheet(worksheet);
