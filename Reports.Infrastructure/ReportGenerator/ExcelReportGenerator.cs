@@ -193,6 +193,8 @@ namespace Reports.Infrastructure.ReportGenerator
                             return GenerateCarsInShowroomsReport(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateSUMqntIndex1Report:
                             return GenerateSUMqntIndex1Report(dataSet, request, reportDtl, manifest);
+                        case Enums.GenerateExcel.GenerateDTLentries9Report:
+                            return GenerateDTLentries9Report(dataSet, request, reportDtl, manifest);
 
                         default:
                             break;
@@ -1194,6 +1196,154 @@ namespace Reports.Infrastructure.ReportGenerator
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Generate SUMqntIndex1 Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+
+        private byte[] GenerateDTLentries9Report(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
+
+                    PrintSettings(worksheet);
+
+                    int currentRow = 1;
+                    int numberOfColumns = dataSet.Tables[0].Columns.Count;
+
+                    AddHeader2(worksheet, request, reportDtl, manifest, currentRow, numberOfColumns);
+
+                    currentRow += 2;
+
+                    StringBuilder filter = new StringBuilder();
+
+                    if (request.Parameters.ContainsKey("FromDate") && request.Parameters["FromDate"] != null && request.Parameters.ContainsKey("ToDate") && request.Parameters["ToDate"] != null)
+                    {
+                        string fromDate = request.Parameters["FromDate"]?.ToString();
+                        string toDate = request.Parameters["ToDate"]?.ToString();
+                        if (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate)
+                            && DateTime.TryParseExact(fromDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedFromDate)
+                            && DateTime.TryParseExact(toDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedToDate))
+                        {
+                            filter.Append($"לתקופה: {parsedToDate:dd/MM/yy} - {parsedFromDate:dd/MM/yy}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("BilledImporterID") && request.Parameters["BilledImporterID"] != null)
+                    {
+                        string billedImporterID = request.Parameters["BilledImporterID"]?.ToString();
+                        if (!string.IsNullOrEmpty(billedImporterID))
+                        {
+                            string billedImporter = dataSet.Tables[1].Rows[0]["BilledImporter"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"ללקוח: {billedImporter} ({billedImporterID})");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("CustomsAgentID") && request.Parameters["CustomsAgentID"] != null)
+                    {
+                        string customsAgentID = request.Parameters["CustomsAgentID"]?.ToString();
+                        if (!string.IsNullOrEmpty(customsAgentID))
+                        {
+                            string customsAgent = dataSet.Tables[2].Rows[0]["CustomsAgent"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"סוכן: {customsAgent} ({customsAgentID})");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("CustomsAgentFile") && request.Parameters["CustomsAgentFile"] != null)
+                    {
+                        string customsAgentFile = request.Parameters["CustomsAgentFile"]?.ToString();
+                        if (!string.IsNullOrEmpty(customsAgentFile))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"תיק סוכן: {customsAgentFile}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("ConsignmentID") && request.Parameters["ConsignmentID"] != null)
+                    {
+                        string consignmentID = request.Parameters["ConsignmentID"]?.ToString();
+                        if (!string.IsNullOrEmpty(consignmentID))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מטען: {consignmentID}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("FromGush") && request.Parameters["FromGush"] != null && request.Parameters.ContainsKey("ToGush") && request.Parameters["ToGush"] != null)
+                    {
+                        string fromGush = request.Parameters["FromGush"]?.ToString();
+                        string toGush = request.Parameters["ToGush"]?.ToString();
+                        if (!string.IsNullOrEmpty(fromGush) && !string.IsNullOrEmpty(toGush))
+                        {
+                            string FormattedFromGush = fromGush.Length > 2 ? $"{fromGush.Substring(0, 2)}/{fromGush.Substring(2)}" : fromGush;
+                            string FormattedToGush = toGush.Length > 2 ? $"{toGush.Substring(0, 2)}/{toGush.Substring(2)}" : toGush;
+
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מגוש {FormattedFromGush} עד גוש {FormattedToGush}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("LineID") && request.Parameters["LineID"] != null)
+                    {
+                        string lineID = request.Parameters["LineID"]?.ToString();
+                        if (!string.IsNullOrEmpty(lineID))
+                        {
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מזהה: {lineID}");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("DeliverySiteNumber") && request.Parameters["DeliverySiteNumber"] != null)
+                    {
+                        string deliverySiteNumber = request.Parameters["DeliverySiteNumber"]?.ToString();
+                        if (!string.IsNullOrEmpty(deliverySiteNumber))
+                        {
+                            string name = dataSet.Tables[3].Rows[0]["Name"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"אתר מקור: {name}");
+                        }
+                    }
+
+                    worksheet.Cell(currentRow, 1).Value = filter.ToString();
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, numberOfColumns)).Merge();
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.WrapText = true;
+                    worksheet.Row(currentRow).Height = 25;
+
+                    currentRow += 2;
+
+                    var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
+                    ApplyTableStyleBoldHeadings(table1);
+
+
+                    currentRow += dataSet.Tables[0].Rows.Count + 1;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+
+                    int startCalc = 6;
+                    var columnsToSum = new List<string> { "כמות" };
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToSum, "SUM");
+
+                    ApplyNumberFormatToSheet(worksheet);
+
+                    worksheet.Columns().AdjustToContents();
+
+                    
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        return stream.ToArray();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Generate DTLentries9 Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
