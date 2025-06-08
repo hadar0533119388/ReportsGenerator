@@ -36,7 +36,8 @@ namespace Reports.Infrastructure.Models
             GetDataForCarsInShowroomsReport,
             GetDataForSUMqntIndex1Report,
             GetDataForDTLentries9Report,
-            GetDataForZeroInventory11Report
+            GetDataForZeroInventory11Report,
+            GetDataForContDtlReport
         }
 
         public enum ReportID
@@ -54,7 +55,8 @@ namespace Reports.Infrastructure.Models
             GenerateCarsInShowroomsReport,
             GenerateSUMqntIndex1Report,
             GenerateDTLentries9Report,
-            GenerateZeroInventory11Report
+            GenerateZeroInventory11Report,
+            GenerateContDtlReport
         }
     }
 }
