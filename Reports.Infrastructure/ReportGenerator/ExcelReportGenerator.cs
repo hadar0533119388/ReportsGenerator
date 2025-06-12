@@ -342,7 +342,93 @@ namespace Reports.Infrastructure.ReportGenerator
                 worksheet.Cell(endCalc, columnIndex).Style.Font.Bold = true;
             }
         }
-       
+
+        private void InsertTableWithSubtotals(IXLWorksheet worksheet, DataTable table, string groupByColumn, List<string> columnsToSum, List<string> columnsToCount, int currentRow)
+        {
+
+            DataTable tableWithSubtotals = table.Clone();
+            tableWithSubtotals.Columns.Add("IsSummaryRow", typeof(bool));
+
+            var grouped = table.AsEnumerable().GroupBy(r => r[groupByColumn]);
+
+            foreach (var group in grouped)
+            {
+                foreach (var row in group)
+                {
+                    var newRow = tableWithSubtotals.NewRow();
+                    newRow.ItemArray = row.ItemArray;
+                    newRow["IsSummaryRow"] = false;
+                    tableWithSubtotals.Rows.Add(newRow);
+                }
+
+                // summaryRow for group
+                var summaryRow = tableWithSubtotals.NewRow();
+
+                foreach (var colName in columnsToSum)
+                {
+                    if (!tableWithSubtotals.Columns.Contains(colName))
+                        continue;
+                    var sum = group.Sum(r => int.TryParse(r[colName]?.ToString(), out var x) ? x : 0);
+                    summaryRow[colName] = sum;
+                }
+
+                foreach (var colName in columnsToCount)
+                {
+                    if (!tableWithSubtotals.Columns.Contains(colName))
+                        continue;
+                    var count = group.Count();
+                    summaryRow[colName] = count;
+                }
+
+                summaryRow["IsSummaryRow"] = true;
+                tableWithSubtotals.Rows.Add(summaryRow);
+            }
+
+            // totalSummaryRow for table
+            var totalRow = tableWithSubtotals.NewRow();
+
+            foreach (var colName in columnsToSum)
+            {
+                if (!tableWithSubtotals.Columns.Contains(colName))
+                    continue;
+                var sum = table.AsEnumerable().Sum(r => int.TryParse(r[colName]?.ToString(), out var x) ? x : 0);
+                totalRow[colName] = sum;
+            }
+
+            foreach (var colName in columnsToCount)
+            {
+                if (!tableWithSubtotals.Columns.Contains(colName))
+                    continue;
+                var count = table.Rows.Count;
+                totalRow[colName] = count;
+            }
+
+            totalRow["IsSummaryRow"] = true;
+            tableWithSubtotals.Rows.Add(totalRow);
+
+            // insert table to sheet
+            var tableRange = worksheet.Cell(currentRow, 1).InsertTable(tableWithSubtotals);
+            ApplyTableStyleBoldHeadings(tableRange);
+
+            int summaryColIndex = tableWithSubtotals.Columns["IsSummaryRow"].Ordinal + 1;
+
+            foreach (var row in tableRange.Rows())
+            {
+                var cellValue = row.Cell(summaryColIndex).GetValue<string>();
+                bool isSummary = false;
+                bool.TryParse(cellValue, out isSummary);
+
+                if (isSummary)
+                {
+                    row.Style.Font.Bold = true;
+                    row.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                }
+            }
+
+            worksheet.Column(summaryColIndex).Delete();
+
+        }
+
         private byte[] GenerateSUMentries9Report(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
         {
             try
@@ -550,7 +636,6 @@ namespace Reports.Infrastructure.ReportGenerator
                         }
                     }
 
-
                     if (request.Parameters.ContainsKey("CustomsAgentFile") && request.Parameters["CustomsAgentFile"] != null)
                     {
                         string customsAgentFile = request.Parameters["CustomsAgentFile"]?.ToString();
@@ -602,7 +687,6 @@ namespace Reports.Infrastructure.ReportGenerator
                         }
                     }
 
-
                     if (request.Parameters.ContainsKey("FromInv") && request.Parameters["FromInv"] != null && request.Parameters.ContainsKey("ToInv") && request.Parameters["ToInv"] != null)
                     {
                         string fromInv = Convert.ToInt32(request.Parameters["FromInv"]).ToString("N0");
@@ -636,27 +720,46 @@ namespace Reports.Infrastructure.ReportGenerator
                     worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
                     worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
 
-                    currentRow += 2;
+                    currentRow += 2;        
 
-                    var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
-                    ApplyTableStyleBoldHeadings(table1);
-
-
-                    currentRow += dataSet.Tables[0].Rows.Count + 1;
-                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-                    worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
-
-                    int startCalc = 6;
                     var columnsToSum = new List<string> { "כמות מוצהרת", "טרם התקבל", "יתרה", "כמות משוחררת", "כמות ברשות מוסמכת" };
                     var columnsToCount = new List<string> { "גוש" };
-                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToSum, "SUM");
-                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToCount, "COUNTA");
 
+                    if (request.IsPrint)
+                    {
+                        int mainSort = request.Parameters.TryGetValue("OrderBy", out var val) && val != null &&
+                                       int.TryParse(val.ToString().FirstOrDefault().ToString(), out var result) ? result : 1;
+
+                        var sortColumnMap = new Dictionary<int, string>
+                        {
+                            { 1, "שם הלקוח" },
+                            { 2, "גוש" },
+                            { 3, "הצהרה" },
+                        };
+
+                        string groupColumnName = sortColumnMap[mainSort];
+
+                        InsertTableWithSubtotals(worksheet, dataSet.Tables[0], groupColumnName, columnsToSum, columnsToCount, currentRow);
+                    }
+
+                    else
+                    {
+                        var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
+                        ApplyTableStyleBoldHeadings(table1);
+
+                        currentRow += dataSet.Tables[0].Rows.Count + 1;
+                        worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                        worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+
+                        int startCalc = 6;                        
+                        ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToSum, "SUM");
+                        ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToCount, "COUNTA");
+                    }
 
                     ApplyNumberFormatToSheet(worksheet);
 
-                    worksheet.Columns().AdjustToContents();
-                    
+                    worksheet.Columns().AdjustToContents();                                        
+
                     using (var stream = new MemoryStream())
                     {
                         workbook.SaveAs(stream);
@@ -1580,5 +1683,8 @@ namespace Reports.Infrastructure.ReportGenerator
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
+
+        
+
     }
 }
