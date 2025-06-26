@@ -37,12 +37,14 @@ namespace Reports.Infrastructure.Models
             GetDataForSUMqntIndex1Report,
             GetDataForDTLentries9Report,
             GetDataForZeroInventory11Report,
-            GetDataForContDtlReport
+            GetDataForContDtlReport,
+            GetDataForInvRepForCustomsReport
         }
 
         public enum ReportID
         {
             SUMentries9,
+            InvRepForCustoms
         }
 
         public enum GenerateExcel

@@ -47,6 +47,9 @@ namespace Reports.Infrastructure.Models
 
         public string FormattedQuantity => Quantity?.ToString("N0") ?? string.Empty;
 
+        public string FormattedOriginalQuantity => OriginalQuantity?.ToString("N0") ?? string.Empty;
+
+
 
     }
 }

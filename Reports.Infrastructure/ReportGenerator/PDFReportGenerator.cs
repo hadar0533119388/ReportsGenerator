@@ -18,6 +18,7 @@ using System.Printing;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using static Reports.Infrastructure.Models.Enums;
 
 namespace Reports.Infrastructure.ReportGenerator
 {
@@ -41,34 +42,24 @@ namespace Reports.Infrastructure.ReportGenerator
         public async Task<byte[]> ExecuteAsync(ReportRequest request, ReportDtl reportDtl)
         {
             try
-            {                
+            {
+                string htmlContent = await BuildHtmlContentAsync(request, reportDtl);
 
-
-                //Get data for a specific report
-                var dataReport = await repositoryDapper.GetDataAsync(request, reportDtl);
-
-                //Convert data to dictionary
-                Dictionary<string, object> data = FlattenObject(dataReport);
-
-
-                if (data != null && data.Any())
-                {
-                    string htmlContent = GenerateHtml(data, reportDtl);
-                    byte[] pdf = await HtmlToPdfDocument(htmlContent);
-
-                    if (request.IsPrint)
-                    {
-                        PrintPdfDocument(pdf, request.PrinterName);
-                    }
-
-                    return pdf;
-                }
-                else
+                if (string.IsNullOrEmpty(htmlContent))
                 {
                     logger.WriteLog($"No data was returned for the report.");
                     return null;
                 }
-                
+
+                byte[] pdf = await HtmlToPdfDocument(htmlContent);
+
+                if (request.IsPrint)
+                {
+                    PrintPdfDocument(pdf, request.PrinterName);
+                }
+
+                return pdf;
+
             }
             catch (CustomException ex)
             {
@@ -316,5 +307,98 @@ namespace Reports.Infrastructure.ReportGenerator
             }
             throw new CustomException((int)ErrorMessages.ErrorCodes.UnknownPrinter, ErrorMessages.Messages[(int)ErrorMessages.ErrorCodes.UnknownPrinter]);
         }
+
+        private ReportRequest CloneRequestWithSplit(ReportRequest original, string splitKey, string splitValue)
+        {
+            var clone = new ReportRequest
+            {
+                ReportID = original.ReportID,
+                ManifestID = original.ManifestID,
+                Parameters = new Dictionary<string, object>(original.Parameters),
+                IsPrint = original.IsPrint,
+                PrinterName = original.PrinterName,
+                User = original.User,
+                ConnectionString = original.ConnectionString
+            };
+
+            clone.Parameters[splitKey] = splitValue;
+            return clone;
+        }
+
+        private async Task<string> BuildInvRepForCustomsHtmlContentAsync(ReportRequest request, ReportDtl reportDtl, string splitValues)
+        {
+            try
+            {
+                var values = splitValues.Split(',').Select(v => v.Trim()).ToList();
+                var htmlBuilder = new StringBuilder();
+
+                for (int i = 0; i < values.Count; i++)
+                {
+                    var clonedRequest = CloneRequestWithSplit(request, "MultyGush", values[i]);
+
+                    var dataReport = await repositoryDapper.GetDataAsync(clonedRequest, reportDtl);
+
+                    Dictionary<string, object> data = FlattenObject(dataReport);
+
+                    if (data != null && data.Any())
+                    {
+                        string html = GenerateHtml(data, reportDtl);
+                        htmlBuilder.Append(html);
+
+                        if (i < values.Count - 1)
+                            htmlBuilder.Append("<div class='page-break'></div>");
+                    }
+                }
+
+                return htmlBuilder.ToString();
+            }
+            catch (CustomException ex)
+            {
+                logger.WriteLog($"Error to Build InvRepForCustoms Html Content Async: {ex}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Build InvRepForCustoms Html Content Async: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+
+        private async Task<string> BuildHtmlContentAsync(ReportRequest request, ReportDtl reportDtl)
+        {
+            try
+            {
+                if (reportDtl.ReportID == ReportID.InvRepForCustoms.ToString() &&
+                    request.Parameters.TryGetValue("MultyGush", out var splitValueObj) &&
+                    splitValueObj is string splitValues &&
+                    splitValues.Contains(","))
+                {
+                    return await BuildInvRepForCustomsHtmlContentAsync(request, reportDtl, splitValues);
+                }
+                else
+                {
+                    var dataReport = await repositoryDapper.GetDataAsync(request, reportDtl);
+                    Dictionary<string, object> data = FlattenObject(dataReport);
+
+                    if (data != null && data.Any())
+                    {
+                        string htmlContent = GenerateHtml(data, reportDtl); 
+                        return htmlContent;
+                    }
+                    return null;
+                }
+            }
+            catch (CustomException ex)
+            {
+                logger.WriteLog($"Error to Build Html Content Async: {ex}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Build Html Content Async: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+
     }
 }

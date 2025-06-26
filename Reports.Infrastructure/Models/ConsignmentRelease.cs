@@ -99,6 +99,8 @@ namespace Reports.Infrastructure.Models
 
         public string FormattedReleaseDate => ReleaseDate?.ToString("dd/MM/yyyy HH:mm");
 
+        public string FormattedReleaseDateShort => ReleaseDate?.ToString("dd/MM/yy");
+
         public string FormattedDealValueNIS => DealValueNIS?.ToString("N0") ?? string.Empty;
 
         public string FormattedCifValueNis => CifValueNis?.ToString("N0") ?? string.Empty;
@@ -106,6 +108,21 @@ namespace Reports.Infrastructure.Models
         public string FormattedTotalTax => TotalTax?.ToString("N0") ?? string.Empty;
 
         public string FormattedFOBvaluePC => FOBvaluePC?.ToString("N0") ?? string.Empty;
+
+        public int? Quantity { get; set; }
+
+        public string FormattedQuantity => Quantity?.ToString("N0") ?? string.Empty;
+
+        public int? LineQuantityMove { get; set; }
+
+        public string FormattedLineQuantityMove => LineQuantityMove?.ToString("N0") ?? string.Empty;
+
+        public int? RemainingAfterDelivery { get; set; }
+
+        public string FormattedRemainingAfterDelivery => RemainingAfterDelivery?.ToString("N0") ?? string.Empty;
+
+
+
 
 
 

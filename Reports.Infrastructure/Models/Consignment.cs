@@ -207,6 +207,7 @@ namespace Reports.Infrastructure.Models
         
         public string FormattedReleaseDate => ReleaseDate?.ToString("dd/MM/yyyy HH:mm");
 
+        public string FormattedReleaseDateShort => ReleaseDate?.ToString("dd/MM/yy");
 
 
     }

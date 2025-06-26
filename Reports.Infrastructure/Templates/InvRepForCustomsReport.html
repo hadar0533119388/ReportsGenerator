@@ -1,0 +1,208 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>כרטיס מעקב על מלאי למכס</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #fff;
+            direction: rtl;
+        }
+
+        .container {
+            background: #fff;
+            border: none;
+        }
+
+        .header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-decoration: underline;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .row {
+            margin-bottom: 10px;
+        }
+
+            .row .label {
+                display: inline;
+            }
+
+            .row .value {
+                font-weight: bold;
+            }
+
+            .row span {
+                display: inline-block;
+                min-width: auto;
+            }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-spacing: 15px;
+            table-layout: auto;
+            min-width: 100%;
+            max-width: 100%;
+            overflow: auto;
+            page-break-inside: auto;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #000;
+            /*white-space: nowrap;*/
+            word-wrap: break-word;
+            overflow: visible;
+            white-space: normal;
+        }
+
+
+
+        th {
+            padding-bottom: 4px;
+            font-weight: normal;
+            vertical-align: bottom;
+        }
+
+        td {
+            font-weight: bold;
+        }
+
+        thead tr:first-child th {
+            border-top: 1px solid black;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        {{{HeaderHtml}}}
+
+        <div class="header">{{ReportDtl_ReportName}}</div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">גוש:</span>
+                <span class="value">{{Consignment_FormattedGush}}</span>
+            </div>
+            <div style="flex: 1 1 15%; min-width: 200px; display: flex;">
+                <span class="label">תאריך:</span>
+                <span class="value">{{DateOpen}}</span>
+            </div>
+        </div>
+
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">הלקוח\המאחסן:</span>
+                <span class="value">{{Consignment_BilledImporter}}</span>
+            </div>
+            <div style="flex: 1 1 52%; min-width: 200px; display: flex;">
+                <span class="label">אניה:</span>
+                <span class="value">{{Consignment_ShipName}}</span>
+            </div>
+            <div style="flex: 1 1 48%; min-width: 200px; display: flex;">
+                <span class="label">שטר מטען:</span>
+                <span class="value">{{Consignment_BOL}}</span>
+            </div>
+        </div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+            </div>
+            <div style="flex: 1 1 52%; min-width: 200px; display: flex;">
+                <span class="label">נמל יבוא:</span>
+                <span class="value">{{Consignment_Port}}</span>
+            </div>
+            <div style="flex: 1 1 48%; min-width: 200px; display: flex;">
+                <span class="label">מצהר:</span>
+                <span class="value">{{Consignment_ShipVisitID}}</span>
+            </div>
+        </div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">תאור הטובין:</span>
+                <span class="value">{{Consignment_ConsignmentDescription}}</span>
+            </div>
+            <div style="flex: 1 1 52%; min-width: 200px; display: flex;">
+                <span class="label">מספר הצהרה:</span>
+                <span class="value">{{Consignment_ConsignmentID}}</span>
+            </div>
+            <div style="flex: 1 1 48%; min-width: 200px; display: flex;">
+                <span class="label">מיום:</span>
+                <span class="value">{{Consignment_FormattedReleaseDateShort}}</span>
+            </div>
+        </div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+            </div>
+            <div style="flex: 1 1 52%; min-width: 200px; display: flex;">
+                <span class="label">כמות מוצהרת:</span>
+                <span class="value">{{Item_FormattedOriginalQuantity}}</span>
+            </div>
+            <div style="flex: 1 1 48%; min-width: 200px; display: flex;">
+                <span class="label">משקל מוצהר:</span>
+                <span class="value">{{Item_FormattedItemWeight}}</span>
+            </div>
+        </div>
+
+        <div class="row" style="display: flex; width: 100%; box-sizing: border-box; justify-content: space-between; direction: rtl;">
+            <div style="flex: 1 1 50%; min-width: 200px; display: flex;">
+                <span class="label">סה"כ נכנסו({{InventoryMoveEntry_FormattedMoveDate}}):</span>
+                <span class="value">{{InventoryMoveEntry_FormattedQuantityOnMove}}</span>
+                <span class="label" style="margin-right: 16px;">נוספו מפיצול:</span>
+                <span class="value">{{InventoryMoveAdd_FormattedQuantityOnMove}}</span>
+            </div>           
+        </div>
+
+
+        <div class="table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>מועד<br>התרה</th>
+                        <th>סוכן<br>המכס</th>
+                        <th>מספר<br>התרה</th>
+                        <th>כמות<br>שהותרה</th>
+                        <th>כמות<br>שנמסרה</th>
+                        <th>נותרה<br>לאחר<br>המסירה</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#ConsignmentReleaseList}}
+                    <tr>
+                        <td>{{ConsignmentReleaseList_FormattedReleaseDateShort}}</td>
+                        <td>{{ConsignmentReleaseList_CustomsAgent}}</td>
+                        <td>{{ConsignmentReleaseList_DeclarationID}}</td>
+                        <td dir="ltr">{{ConsignmentReleaseList_FormattedQuantity}}</td>
+                        <td dir="ltr">{{ConsignmentReleaseList_FormattedLineQuantityMove}}</td>
+                        <td dir="ltr">{{ConsignmentReleaseList_FormattedRemainingAfterDelivery}}</td>
+                    </tr>
+                    {{/ConsignmentReleaseList}}
+                </tbody>
+            </table>
+        </div>
+
+
+    </div>
+</body>
+</html>
