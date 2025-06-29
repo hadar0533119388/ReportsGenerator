@@ -38,7 +38,9 @@ namespace Reports.Infrastructure.Models
             GetDataForDTLentries9Report,
             GetDataForZeroInventory11Report,
             GetDataForContDtlReport,
-            GetDataForInvRepForCustomsReport
+            GetDataForInvRepForCustomsReport,
+            GetDataFordeliveryCancel25Report
+
         }
 
         public enum ReportID
@@ -58,7 +60,8 @@ namespace Reports.Infrastructure.Models
             GenerateSUMqntIndex1Report,
             GenerateDTLentries9Report,
             GenerateZeroInventory11Report,
-            GenerateContDtlReport
+            GenerateContDtlReport,
+            GeneratedeliveryCancel25Report
         }
     }
 }
