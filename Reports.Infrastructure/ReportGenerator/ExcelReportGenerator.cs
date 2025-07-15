@@ -53,6 +53,11 @@ namespace Reports.Infrastructure.ReportGenerator
 
                     if (request.IsPrint)
                     {
+                        if (request.PrinterName == "PDF")
+                        {
+                            byte[] excelToPdf = ConvertExcelToPdf(excel);
+                            return excelToPdf;
+                        }
                         PrintExcelDocument(excel, request.PrinterName);
                     }
 
@@ -73,6 +78,71 @@ namespace Reports.Infrastructure.ReportGenerator
             {
                 logger.WriteLog($"Error to Execute Async: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+        public byte[] ConvertExcelToPdf(byte[] excelBytes)
+        {
+            string inputFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".xlsx");
+            string outputFilePath = Path.ChangeExtension(inputFilePath, ".pdf");
+
+            try
+            {
+                File.WriteAllBytes(inputFilePath, excelBytes);
+
+                var conversionProcessStartInfo = new ProcessStartInfo
+                {
+                    FileName = libreOffice,
+                    Arguments = $"--headless --nologo --norestore --convert-to pdf --outdir \"{Path.GetDirectoryName(outputFilePath)}\" \"{inputFilePath}\"",
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (Process process = new Process { StartInfo = conversionProcessStartInfo })
+                {
+                    process.Start();
+
+                    string errorOutput = process.StandardError.ReadToEnd();
+                    string standardOutput = process.StandardOutput.ReadToEnd();
+
+                    process.WaitForExit();
+
+                    if (process.ExitCode != 0 || !File.Exists(outputFilePath))
+                    {
+                        logger.WriteLog($"Failed to convert Excel to PDF. ExitCode: {process.ExitCode}");
+                        if (!string.IsNullOrEmpty(errorOutput))
+                        {
+                            logger.WriteLog($"Error details: {errorOutput}");
+                        }
+
+                        throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, "Failed to convert Excel to PDF.");
+                    }
+
+                    logger.WriteLog($"Excel to PDF conversion completed successfully.");
+
+                    return File.ReadAllBytes(outputFilePath);
+
+                }
+            }
+            catch (CustomException ex)
+            {
+                logger.WriteLog($"Failed to convert Excel to PDF: {ex}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Failed to convert Excel to PDF: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+            finally
+            {
+                if (File.Exists(inputFilePath))
+                    File.Delete(inputFilePath);
+
+                if (File.Exists(outputFilePath))
+                    File.Delete(outputFilePath);
+
             }
         }
 
@@ -205,6 +275,8 @@ namespace Reports.Infrastructure.ReportGenerator
                             return GenerateRelease33Report(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateCustomerInvCover28Report:
                             return GenerateCustomerInvCover28Report(dataSet, request, reportDtl, manifest);
+                        case Enums.GenerateExcel.GenerateStorageCalcReport:
+                            return GenerateStorageCalcReport(dataSet, request, reportDtl, manifest);
 
                         default:
                             break;
@@ -1973,6 +2045,191 @@ namespace Reports.Infrastructure.ReportGenerator
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Generate CustomerInvCover28 Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+
+        private byte[] GenerateStorageCalcReport(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
+
+                    if (request.Parameters.ContainsKey("ImporterName") && request.Parameters["ImporterName"] != null)
+                    {
+                        string importerName = request.Parameters["ImporterName"]?.ToString();
+                        if (!string.IsNullOrEmpty(importerName))
+                        {
+                            var columnsToDelete = new List<string> { "לקוח" };
+                            RemoveColumnsByName(dataSet.Tables[0], columnsToDelete);
+                        }
+                    }
+                   
+                    PrintSettings(worksheet);
+
+                    int currentRow = 1;
+                    int numberOfColumns = dataSet.Tables[0].Columns.Count;
+
+                    currentRow++;
+
+                    worksheet.Cell(currentRow, 1).Value = $"{manifest.TermName}, {manifest.TermVAT}";
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Font.FontSize = 11;
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, 4)).Merge();
+
+                    string base64String = manifest.Logo.Split(',')[1];
+                    byte[] imageBytes = Convert.FromBase64String(base64String);
+                    MemoryStream imageStream = new MemoryStream(imageBytes);
+
+                    int startColumn = numberOfColumns - 1;
+                    int columnsToSpan = 2;
+
+                    // Calculating the total width of the two columns
+                    double totalWidthUnits = 0;
+                    for (int i = 0; i < columnsToSpan; i++)
+                    {
+                        totalWidthUnits += worksheet.Column(startColumn + i).Width;
+                    }
+
+                    // Converting from Excel width units to pixels – estimate: approximately 7.5 pixels per width unit
+                    int widthInPixels = (int)(totalWidthUnits * 7.5);
+
+                    var picture = worksheet.AddPicture(imageStream).MoveTo(worksheet.Cell(1, startColumn)).WithSize(widthInPixels, 70); 
+
+                    currentRow++;
+
+                    worksheet.Cell(currentRow, 1).Value = $"{manifest.Location}, ת.ד. {manifest.POB}, מיקוד {manifest.ZIPcode}";
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Font.FontSize = 11;
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, 4)).Merge();
+
+                    currentRow++;
+
+                    worksheet.Cell(currentRow, 1).Value = $"{manifest.Phone}";
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Font.FontSize = 11;
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, 4)).Merge();
+
+                    currentRow++;
+
+                    worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+
+
+                    StringBuilder header = new StringBuilder();
+                    header.Append(reportDtl.ReportName);
+
+                    if (request.Parameters.ContainsKey("direction") && request.Parameters["direction"] != null)
+                    {
+                        string direction = request.Parameters["direction"]?.ToString();
+                        if (!string.IsNullOrEmpty(direction))
+                        {
+                            if(direction == "I")
+                                header.Append(" ליבוא");
+                            else
+                                header.Append(" ליצוא");
+
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("ImporterName") && request.Parameters["ImporterName"] != null)
+                    {
+                        string importerName = request.Parameters["ImporterName"]?.ToString();
+                        if (!string.IsNullOrEmpty(importerName))
+                        {
+                            header.Append($", עבור {importerName}");
+
+                        }
+                    }
+
+                    worksheet.Cell(currentRow, 1).Value = header.ToString();
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Font.FontSize = 11;
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, numberOfColumns)).Merge();
+
+                    currentRow++;
+
+                    worksheet.Cell(currentRow, 1).Value = $"נכון ל - {DateTime.Now.ToString("dd/MM/yy")}";
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, numberOfColumns)).Merge();
+
+                    currentRow += 4;
+
+                    var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
+                    ApplyTableStyleBoldHeadings(table1);
+
+                    currentRow += dataSet.Tables[0].Rows.Count + 1;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+
+                    int startCalc = 11;
+
+                    int columnIndex = dataSet.Tables[0].Columns["סה\"כ בש\"ח"].Ordinal + 1;
+
+                    decimal total = 0;
+
+                    for (int row = startCalc; row < currentRow; row++)
+                    {
+                        var cell = worksheet.Cell(row, columnIndex);
+                        if (decimal.TryParse(cell.GetValue<string>(), out decimal value))
+                        {
+                            total += value;
+                        }
+                    }
+
+                    worksheet.Cell(currentRow, columnIndex - 1).Value = "סכום כולל:";
+                    worksheet.Cell(currentRow, columnIndex - 1).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, columnIndex).Value = $"₪ {total.ToString("N0")}";
+                    worksheet.Cell(currentRow, columnIndex).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, columnIndex).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Right);
+
+                    currentRow++;
+
+                    decimal vat = Convert.ToDecimal(request.Parameters["VAT"]);
+                    decimal vatAmount = total * vat;
+
+                    worksheet.Cell(currentRow, columnIndex - 1).Value = $"מע\"מ ({(int)(vat * 100)}%):";
+                    worksheet.Cell(currentRow, columnIndex - 1).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, columnIndex).Value = $"₪ {vatAmount.ToString("N0")}";
+                    worksheet.Cell(currentRow, columnIndex).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, columnIndex).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Right);
+
+                    currentRow++;
+
+                    worksheet.Cell(currentRow, columnIndex - 1).Value = "סה\"כ:";
+                    worksheet.Cell(currentRow, columnIndex - 1).Style.Font.Bold = true;
+
+                    worksheet.Cell(currentRow, columnIndex).Value = $"₪ {(total + vatAmount).ToString("N0")}";
+                    worksheet.Cell(currentRow, columnIndex).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, columnIndex).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Right);
+
+
+                    int lastRow = worksheet.LastRowUsed().RowNumber();
+
+                    worksheet.Range(startCalc, 1, lastRow, 1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+
+                    ApplyNumberFormatToSheet(worksheet);
+
+                    worksheet.Columns().AdjustToContents();
+
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        return stream.ToArray();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Generate StorageCalc Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }

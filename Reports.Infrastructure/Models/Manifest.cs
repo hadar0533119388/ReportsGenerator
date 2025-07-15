@@ -50,5 +50,7 @@ namespace Reports.Infrastructure.Models
         public int? LastGush { get; set; }
 
         public string OfficePrinter { get; set; }
+
+        public string Logo { get; set; }
     }
 }
