@@ -279,6 +279,8 @@ namespace Reports.Infrastructure.ReportGenerator
                             return GenerateStorageCalcReport(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateExtAutorityInv18Report:
                             return GenerateExtAutorityInv18Report(dataSet, request, reportDtl, manifest);
+                        case Enums.GenerateExcel.GenerateCustomerInvAvg4Report:
+                            return GenerateCustomerInvAvg4Report(dataSet, request, reportDtl, manifest);
 
                         default:
                             break;
@@ -2345,6 +2347,72 @@ namespace Reports.Infrastructure.ReportGenerator
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Generate ExtAutorityInv18 Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+
+        private byte[] GenerateCustomerInvAvg4Report(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
+
+                    PrintSettings(worksheet);
+
+                    int currentRow = 1;
+                    int numberOfColumns = dataSet.Tables[0].Columns.Count;
+
+                    AddHeader2(worksheet, request, reportDtl, manifest, currentRow, numberOfColumns);
+
+                    currentRow += 2;
+
+                    StringBuilder filter = new StringBuilder();
+
+                    if (request.Parameters.ContainsKey("BilledImporterID") && request.Parameters["BilledImporterID"] != null)
+                    {
+                        string billedImporterID = request.Parameters["BilledImporterID"]?.ToString();
+                        if (!string.IsNullOrEmpty(billedImporterID))
+                        {
+                            string billedImporter = dataSet.Tables[1].Rows[0]["BilledImporter"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"ללקוח: {billedImporter} ({billedImporterID})");
+                        }
+                    }
+
+
+                    worksheet.Cell(currentRow, 1).Value = filter.ToString();
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, numberOfColumns)).Merge();
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    currentRow += 2;
+
+                    var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
+                    ApplyTableStyleBoldHeadings(table1);
+
+
+                    currentRow += dataSet.Tables[0].Rows.Count + 1;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+
+
+                    ApplyNumberFormatToSheet(worksheet);
+
+                    worksheet.Columns().AdjustToContents();
+
+                   
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        return stream.ToArray();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Generate CustomerInvAvg4 Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }

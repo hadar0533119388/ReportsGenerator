@@ -43,7 +43,8 @@ namespace Reports.Infrastructure.Models
             GetDataForRelease33Report,
             GetDataForCustomerInvCover28Report,
             GetDataForStorageCalcReport,
-            GetDataForExtAutorityInv18Report
+            GetDataForExtAutorityInv18Report,
+            GetDataForCustomerInvAvg4Report
         }
 
         public enum ReportID
@@ -68,7 +69,8 @@ namespace Reports.Infrastructure.Models
             GenerateRelease33Report,
             GenerateCustomerInvCover28Report,
             GenerateStorageCalcReport,
-            GenerateExtAutorityInv18Report
+            GenerateExtAutorityInv18Report,
+            GenerateCustomerInvAvg4Report
         }
     }
 }
