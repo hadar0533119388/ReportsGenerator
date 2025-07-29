@@ -116,6 +116,11 @@ namespace Reports.Infrastructure.ReportGenerator
                             logger.WriteLog($"Error details: {errorOutput}");
                         }
 
+                        if (!string.IsNullOrEmpty(standardOutput))
+                        {
+                            logger.WriteLog($"Error details: {standardOutput}");
+                        }
+
                         throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, "Failed to convert Excel to PDF.");
                     }
 
