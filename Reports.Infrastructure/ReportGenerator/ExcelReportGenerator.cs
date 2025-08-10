@@ -288,6 +288,8 @@ namespace Reports.Infrastructure.ReportGenerator
                             return GenerateCustomerInvAvg4Report(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateAVGStorageDays35Report:
                             return GenerateAVGStorageDays35Report(dataSet, request, reportDtl, manifest);
+                        case Enums.GenerateExcel.GenerateSerialsReport:
+                            return GenerateSerialsReport(dataSet, request, reportDtl, manifest);
 
                         default:
                             break;
@@ -2500,6 +2502,67 @@ namespace Reports.Infrastructure.ReportGenerator
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Generate AVGStorageDays35 Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+
+        private byte[] GenerateSerialsReport(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
+
+                    PrintSettings(worksheet);
+
+                    string columnName = "משתמש";
+
+                    if (!dataSet.Tables[0].Columns.Contains(columnName))
+                        dataSet.Tables[0].Columns.Add(columnName, request.User?.GetType() ?? typeof(string));
+
+                    foreach (DataRow row in dataSet.Tables[0].Rows)
+                    {
+                        row[columnName] = request.User;
+                    }
+
+                    int currentRow = 1;
+                    int numberOfColumns = dataSet.Tables[0].Columns.Count;
+
+                    var table1 = worksheet.Cell(currentRow, 1).InsertTable(dataSet.Tables[0]);
+                    ApplyTableStyleBoldHeadings(table1);
+
+
+                    currentRow += dataSet.Tables[0].Rows.Count + 1;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                    worksheet.Range(currentRow, 1, currentRow, numberOfColumns).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+
+                    int startCalc = 2;
+
+                    var columnsToCount = new List<string> { "מס' סריאלי" };
+
+                    if(reportDtl.ReportID == ReportID.SerialsIn36.ToString())
+                        columnsToCount.Add("תאריך כניסה");
+
+                    else if(reportDtl.ReportID == ReportID.SerialsOut37.ToString())
+                        columnsToCount.Add("תאריך מסירה");
+
+                    ApplyColumnFormula(worksheet, dataSet.Tables[0], startCalc, currentRow, columnsToCount, "COUNTA");
+
+                    ApplyNumberFormatToSheet(worksheet);
+
+                    worksheet.Columns().AdjustToContents();                   
+
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        return stream.ToArray();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Generate Serials Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }

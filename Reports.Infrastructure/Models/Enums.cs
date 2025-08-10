@@ -45,13 +45,17 @@ namespace Reports.Infrastructure.Models
             GetDataForStorageCalcReport,
             GetDataForExtAutorityInv18Report,
             GetDataForCustomerInvAvg4Report,
-            GetDataForAVGStorageDays35Report
+            GetDataForAVGStorageDays35Report,
+            GetDataForSerialsIn36Report,
+            GetDataForSerialsOut37Report
         }
 
         public enum ReportID
         {
             SUMentries9,
-            InvRepForCustoms
+            InvRepForCustoms,
+            SerialsIn36,
+            SerialsOut37
         }
 
         public enum GenerateExcel
@@ -72,7 +76,8 @@ namespace Reports.Infrastructure.Models
             GenerateStorageCalcReport,
             GenerateExtAutorityInv18Report,
             GenerateCustomerInvAvg4Report,
-            GenerateAVGStorageDays35Report
+            GenerateAVGStorageDays35Report,
+            GenerateSerialsReport
         }
     }
 }
