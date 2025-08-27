@@ -47,7 +47,8 @@ namespace Reports.Infrastructure.Models
             GetDataForCustomerInvAvg4Report,
             GetDataForAVGStorageDays35Report,
             GetDataForSerialsIn36Report,
-            GetDataForSerialsOut37Report
+            GetDataForSerialsOut37Report,
+            GetDataForDelivery26Report
         }
 
         public enum ReportID
@@ -77,7 +78,8 @@ namespace Reports.Infrastructure.Models
             GenerateExtAutorityInv18Report,
             GenerateCustomerInvAvg4Report,
             GenerateAVGStorageDays35Report,
-            GenerateSerialsReport
+            GenerateSerialsReport,
+            GenerateDelivery26Report
         }
     }
 }

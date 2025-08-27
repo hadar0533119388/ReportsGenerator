@@ -290,6 +290,8 @@ namespace Reports.Infrastructure.ReportGenerator
                             return GenerateAVGStorageDays35Report(dataSet, request, reportDtl, manifest);
                         case Enums.GenerateExcel.GenerateSerialsReport:
                             return GenerateSerialsReport(dataSet, request, reportDtl, manifest);
+                        case Enums.GenerateExcel.GenerateDelivery26Report:
+                            return GenerateDelivery26Report(dataSet, request, reportDtl, manifest);
 
                         default:
                             break;
@@ -2563,6 +2565,131 @@ namespace Reports.Infrastructure.ReportGenerator
             catch (Exception ex)
             {
                 logger.WriteLog($"Error to Generate Serials Report: {ex}");
+                throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
+            }
+        }
+
+        private byte[] GenerateDelivery26Report(DataSet dataSet, ReportRequest request, ReportDtl reportDtl, Manifest manifest)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add(reportDtl.ReportID);
+
+                    PrintSettings(worksheet);
+
+                    int currentRow = 1;
+                    int numberOfColumns = dataSet.Tables[1].Columns.Count;
+
+                    AddHeader2(worksheet, request, reportDtl, manifest, currentRow, numberOfColumns);
+
+                    currentRow += 2;
+
+                    StringBuilder filter = new StringBuilder();
+
+                    if (request.Parameters.ContainsKey("BilledImporterID") && request.Parameters["BilledImporterID"] != null)
+                    {
+                        string billedImporterID = request.Parameters["BilledImporterID"]?.ToString();
+                        if (!string.IsNullOrEmpty(billedImporterID))
+                        {
+                            string billedImporter = dataSet.Tables[2].Rows[0]["BilledImporter"].ToString();
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"ללקוח: {billedImporter} ({billedImporterID})");
+                        }
+                    }
+
+                    if (request.Parameters.ContainsKey("FromGush") && request.Parameters["FromGush"] != null && request.Parameters.ContainsKey("ToGush") && request.Parameters["ToGush"] != null)
+                    {
+                        string fromGush = request.Parameters["FromGush"]?.ToString();
+                        string toGush = request.Parameters["ToGush"]?.ToString();
+                        if (!string.IsNullOrEmpty(fromGush) && !string.IsNullOrEmpty(toGush))
+                        {
+                            string FormattedFromGush = fromGush.Length > 2 ? $"{fromGush.Substring(0, 2)}/{fromGush.Substring(2)}" : fromGush;
+                            string FormattedToGush = toGush.Length > 2 ? $"{toGush.Substring(0, 2)}/{toGush.Substring(2)}" : toGush;
+
+                            if (filter.Length > 0) filter.Append(", ");
+                            filter.Append($"מגוש {FormattedFromGush} עד גוש {FormattedToGush}");
+                        }
+                    }
+
+                    worksheet.Cell(currentRow, 1).Value = filter.ToString();
+                    worksheet.Range(worksheet.Cell(currentRow, 1), worksheet.Cell(currentRow, numberOfColumns)).Merge();
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                    currentRow += 2;
+
+                    DataTable info = dataSet.Tables[0]; // Gush table
+                    DataTable details = dataSet.Tables[1]; // Detail table
+
+                    var columnsToSum = new List<string> { "נפח במסירה", "משקל במסירה", "כמות במסירה" };
+
+                    foreach (DataRow infoRow in info.Rows)
+                    {
+                        var gushInfo = info.Clone();
+                        gushInfo.ImportRow(infoRow);
+
+                        var table1 = worksheet.Cell(currentRow, 1).InsertTable(gushInfo);
+                        ApplyTableStyleBoldHeadings(table1);
+                        currentRow += gushInfo.Rows.Count + 2;
+ 
+                        var gush = infoRow["גוש"];
+                        var detailRows = details.AsEnumerable().Where(r => r["גוש"].Equals(gush));
+
+                        if (detailRows.Any())
+                        {
+                            DataTable detailTable = details.Clone();
+
+                            foreach (var dr in detailRows)
+                                detailTable.ImportRow(dr);
+
+                            detailTable.Columns.Remove("גוש");
+
+                            int detailStartRow = currentRow;
+
+                            var table2 = worksheet.Cell(currentRow, 1).InsertTable(detailTable);
+                            ApplyTableStyleBoldHeadings(table2);
+
+                            currentRow += detailTable.Rows.Count + 1;
+                            worksheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                            worksheet.Range(currentRow, 1, currentRow, detailTable.Columns.Count).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+
+                            ApplyColumnFormula(worksheet, detailTable, detailStartRow, currentRow, columnsToSum, "SUM");
+                            var mergeRange = worksheet.Range(currentRow, 1, currentRow, 3);
+                            mergeRange.Merge();
+                            mergeRange.Value = "סה\"כ מסירות בגוש:";
+                            mergeRange.Style.Font.Bold = true;
+                            currentRow++;
+
+                        }
+
+                        if (request.IsPrint)
+                        {
+                            worksheet.PageSetup.AddHorizontalPageBreak(currentRow - 1); // Page break
+                        }
+                        else
+                        {
+                            currentRow++; 
+                        }
+                    }
+          
+
+                    ApplyNumberFormatToSheet(worksheet);
+
+                    worksheet.Columns().AdjustToContents();
+                    
+
+                    using (var stream = new MemoryStream())
+                    {
+                        workbook.SaveAs(stream);
+                        return stream.ToArray();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.WriteLog($"Error to Generate Delivery26 Report: {ex}");
                 throw new CustomException((int)ErrorMessages.ErrorCodes.GlobalError, ex.Message);
             }
         }
